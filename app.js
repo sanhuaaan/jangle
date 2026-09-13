@@ -985,42 +985,55 @@ const corpusReady = () => corpus ??= fetch("progressions.json")
   .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
   .catch(err => { corpus = null; throw err; });
 
+const suggestPart = document.querySelector("#suggest-part");
+
+// Lo que hay en el campo, si es una progresión: es de lo que «otra parte» parte.
+const written = () => {
+  try { return parseProgression(input.value).map(c => c.symbol); } catch { return []; }
+};
+
 document.querySelector("#open-suggest").addEventListener("click", () => {
   // El tono de partida es el de lo que ya hay escrito; sin nada, Sol, que es
   // donde la guitarra suena más sola.
   suggestKey.value = transposeBox.hidden ? "G" : KEYS[currentKey];
+  suggestPart.hidden = !written().length;
   suggestBox.showModal();
   corpusReady().catch(() => {});
 });
 
-document.querySelector("#suggest-form").addEventListener("submit", async e => {
-  e.preventDefault();
+document.querySelector("#suggest-form").addEventListener("submit", e => { e.preventDefault(); askCommon(null); });
+// Otra parte de la misma canción, en barato: comparte acordes con la que hay,
+// arranca en otro y no es el mismo bucle girado (related, en progressions.js).
+suggestPart.addEventListener("click", () => askCommon(written()));
+
+async function askCommon(from) {
   suggestResults.replaceChildren();
   suggestStatus.textContent = "Buscando…";
   await dbReady;
   let data;
   try { data = await corpusReady(); } catch { suggestStatus.textContent = "No se ha podido cargar el tomo de progresiones."; return; }
   const key = KEYS.indexOf(suggestKey.value);
-  const list = propose(db, data, { key, length: Number(suggestLength.value), rare: suggestRare.value / 100 });
+  const list = propose(db, data, { key, length: Number(suggestLength.value), rare: suggestRare.value / 100, from: from?.length ? from : null });
+  const how = db ? "de más a menos cuerdas al aire por acorde, una vez adornada" : "sin las posiciones de guitarra no hay criba: van por frecuencia";
   suggestStatus.textContent = !list.length ? "No ha salido ninguna: prueba otra vez."
-    : db ? "De más a menos cuerdas al aire por acorde, una vez adornada. Pulsa una para usarla."
-    : "Sin las posiciones de guitarra no hay criba: van por frecuencia. Pulsa una para usarla.";
+    : from?.length ? `Comparten acordes con ${from.join(" ")} y arrancan en otro sitio; ${how}. Pulsa una para usarla.`
+    : `${how[0].toUpperCase()}${how.slice(1)}. Pulsa una para usarla.`;
   for (const s of list) {
     const li = el("li");
     li.append(
       el("strong", { textContent: s.chords.join(" ") }),
       el("span", { className: "why", textContent: ` ${s.roman} · ${s.total.toLocaleString("es")} canciones${s.open === null ? "" : ` · ${s.open.toFixed(1)} al aire por acorde`}` }),
     );
-    li.addEventListener("click", () => useSuggestion(s, key));
+    li.addEventListener("click", () => useSuggestion(s, key, !!from?.length));
     suggestResults.append(li);
   }
-});
+}
 
 // Igual que usar una parte de canción: al campo, y de ahí el camino de siempre.
-function useSuggestion(s, key) {
+function useSuggestion(s, key, part) {
   input.value = s.chords.join(" ");
   songContext = {
-    label: `Progresión común · ${s.roman} en ${KEYS[key]} · ${s.total.toLocaleString("es")} canciones en el tomo`,
+    label: `${part ? "Otra parte" : "Progresión común"} · ${s.roman} en ${KEYS[key]} · ${s.total.toLocaleString("es")} canciones en el tomo`,
     chords: input.value,
   };
   suggestBox.close();

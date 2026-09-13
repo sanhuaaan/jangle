@@ -1162,7 +1162,7 @@ test("progressions.json trae firmas legibles, comunes y ordenadas", () => {
 
 // ── suggest.js: una progresión común para empezar ────────────────────────
 
-import { canonical, realize, roman, weight, moves, propose } from "./progressions.js";
+import { canonical, realize, roman, weight, moves, related, propose } from "./progressions.js";
 
 test("las rotaciones de un bucle tienen la misma forma canónica", () => {
   const rots = ["0M.9m.5M.7M", "0m.8M.10M.3M", "0M.2M.7M.4m", "0M.5M.2m.10M"]; // C Am F G, Am F G C, F G C Am, G C Am F
@@ -1207,6 +1207,16 @@ test("el mando de rareza va de pesar lo que lleva a pesar igual", () => {
   assert.ok(weight(1000, 0.5) > weight(10, 0.5));
 });
 
+test("otra parte comparte acordes, arranca en otro y no es el mismo bucle girado", () => {
+  const verse = ["G", "D", "Em", "C"];
+  assert.ok(related(["C", "D", "G", "Em"], verse));          // arranca en el IV con los mismos acordes
+  assert.ok(related(["C", "G", "D", "Em"], verse) === false); // parece otra y es la misma girada
+  assert.ok(related(["Em", "C", "G", "D"], verse) === false); // el mismo bucle girado
+  assert.ok(related(["G", "Bm", "C", "D"], verse) === false); // arranca donde la estrofa
+  assert.ok(related(["Am", "Bm", "F#m", "Bm"], verse) === false); // no comparte nada
+  assert.ok(related(["C", "D", "Em", "Em"], ["Gmaj7", "Dsus4", "Em7", "Cadd9"])); // el color no cuenta
+});
+
 test("propose devuelve bucles distintos en el tono, cribados por resonancia", () => {
   let seed = 7;
   const random = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
@@ -1220,6 +1230,11 @@ test("propose devuelve bucles distintos en el tono, cribados por resonancia", ()
     assert.ok(s.open !== null && s.open >= 0);
   }
   for (let i = 1; i < out.length; i++) assert.ok(out[i - 1].open >= out[i].open, "sin ordenar");
+  // Otra parte: todas emparentadas con la que hay.
+  const verse = ["G", "D", "Em", "C"];
+  const parts = propose(guitarDb, corpus, { key: G, from: verse, random });
+  assert.ok(parts.length >= 3, `${parts.length} otras partes`);
+  for (const s of parts) assert.ok(related(s.chords, verse), `no emparentada: ${s.chords}`);
   // Sin BD no hay criba y manda la frecuencia.
   const plain = propose(null, corpus, { key: G, random });
   for (let i = 1; i < plain.length; i++) assert.ok(plain[i - 1].total >= plain[i].total);

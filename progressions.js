@@ -108,16 +108,44 @@ function draw(all, rare, n, random) {
   return out;
 }
 
+// Lectura de un acorde para comparar progresiones: fundamental y familia, sin
+// color ni bajo. Cmaj7 en la estrofa y C en la propuesta son el mismo acorde a
+// estos efectos; es la misma lectura con la que el tomo hace sus firmas.
+export function readChord(sym) {
+  const c = Chord.get(sym.split("/")[0]);
+  if (!c.tonic) return null;
+  const iv = new Set(c.intervals);
+  const family = iv.has("3m") ? (iv.has("5d") ? "d" : "m")
+    : iv.has("3M") ? (iv.has("5A") && !iv.has("5P") ? "a" : "M")
+    : iv.has("4P") || iv.has("2M") ? "s" : "5";
+  return Note.chroma(c.tonic) + family;
+}
+
+// Qué hace de una progresión otra parte de la misma canción, en barato: que
+// comparta algún acorde con la que hay (lo que las hermana), que arranque en
+// otro (lo que las distingue: el estribillo sube al IV o al vi) y que no sea el
+// mismo bucle girado. Lo caro sería mirar qué otras partes llevan las canciones
+// del tomo que tienen ésta; eso queda dicho en MEJORAS.
+export function related(chords, from) {
+  const a = chords.map(readChord), b = from.map(readChord);
+  if (a.includes(null) || b.includes(null)) return false;
+  const rot = xs => xs.map((_, i) => [...xs.slice(i), ...xs.slice(0, i)].join(".")).sort()[0];
+  return a.some(x => b.includes(x)) && a[0] !== b[0] && rot(a) !== rot(b);
+}
+
 const RESONANCE = PRESETS.find(p => p.id === "resonance");
 
 // Sugerencias en un tono: se sortean `draw` bucles por frecuencia, se realizan
 // y se ordenan por las cuerdas al aire por acorde del mejor arreglo resonante,
 // que es lo que mide cuánto da de sí la progresión una vez adornada. Sin la BD
-// de digitaciones no hay criba y manda la frecuencia.
-export function propose(db, data, { key, length = 4, rare = 0.25, draw: n = 24, keep = 6, random = Math.random } = {}) {
+// de digitaciones no hay criba y manda la frecuencia. Con `from`, otra parte de
+// la misma canción: solo las emparentadas con esa progresión, y se sortean el
+// doble porque los filtros tiran la mitad.
+export function propose(db, data, { key, length = 4, rare = 0.25, from = null, draw: n = from ? 48 : 24, keep = 6, random = Math.random } = {}) {
   const out = [];
   for (const { sig, total } of draw(data.lengths[length] ?? [], rare, n, random)) {
     const chords = realize(sig, key);
+    if (from && !related(chords, from)) continue;
     let prog;
     try { prog = parseProgression(chords.join(" ")); } catch { continue; }
     let open = null;

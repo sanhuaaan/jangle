@@ -376,8 +376,10 @@ cosas se decidieron construyendo:
 - Las firmas de una sola fundamental (`0M.0M.0M.0s`, que es `G G7 G Gsus4`) se filtran: el tomo
   las trae porque las ventanas se cortan sin mirar.
 
-**Lo que queda abierto de aquí:** «otra parte de la misma canción» —hoy volver a pulsar solo
-comparte el tono; lo que haría de una segunda progresión un estribillo es compartir acordes
-con la primera y arrancar en otro sitio, y lo que lo haría de verdad es la coocurrencia de
-firmas en las canciones del tomo, que habría que construir offline—. Y progresiones de ocho,
-encadenando dos ventanas.
+**Otra parte de la misma canción — hecha la barata (2026-09-13).** Volver a pulsar solo
+compartía el tono. Ahora, con progresión en el campo, «otra parte» se queda con las sorteadas
+que comparten algún acorde con ella (por fundamental y familia, sin color), arrancan en otro y
+no son el mismo bucle girado; se sortean el doble porque los filtros tiran la mitad. **Lo que
+queda abierto:** la de verdad —qué otras partes llevan las canciones del tomo que tienen ésta,
+coocurrencia de firmas por canción, que habría que construir offline desde los ficheros de
+canciones— y las progresiones de ocho, encadenando dos ventanas.

@@ -422,6 +422,11 @@ Lo que hay que saber:
 - La familia suspendida de la firma no distingue sus2 de sus4: sale sus2, y Sustituciones lo
   cambia. Las de quinta no tienen digitación en la base de datos y se descartan. Las firmas de
   una sola fundamental (`G G7 G Gsus4`) son un acorde adornado, no una progresión, y no salen.
+- **Otra parte de la que hay.** Con una progresión en el campo, el diálogo ofrece también otra
+  parte de la misma canción: el mismo sorteo, quedándose solo con las que comparten algún acorde
+  con la que hay (sin contar el color: `Cmaj7` y `C` son el mismo), arrancan en otro y no son el
+  mismo bucle girado. Es lo barato que hace que un estribillo suene a estribillo de esa estrofa;
+  lo caro sería mirar qué otras partes llevan las canciones del tomo que tienen ésta.
 - El fichero se pide la primera vez que se abre el diálogo (124 KB, 31 comprimido). Sin las
   posiciones de guitarra no hay criba y las seis van por frecuencia.
 - Los datos vienen de Chordonomicon (CC BY-NC 4.0) por De Chordis Mysteriis; solo se guardan
