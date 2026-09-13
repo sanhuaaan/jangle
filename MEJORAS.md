@@ -294,3 +294,51 @@ voicings». Resuelto eso, un hallazgo es esa cadena más una nota tuya, y «Expl
 **Lo que lo haría valer la pena.** Que un hallazgo se pueda volver a abrir y seguir
 trasteando —o sea, el hilo 5— y que se pueda pasar a alguien, que es lo que ya hacen
 descargar y cargar. Sin esas dos, es una lista de capturas de pantalla en texto.
+
+## 10. Un generador de progresiones para empezar a componer
+
+**La idea.** Hoy las cuatro pestañas consumen una progresión; para quien está componiendo,
+lo que no tiene es precisamente eso. Un botón junto al campo —«Sugiéreme una»— que dé una
+progresión común en el tono que pidas, y que las pestañas hagan el resto: para componer
+post-rock, que vive de acordes extendidos y cuerdas al aire, el plan es **partir de una
+progresión común e irla alterando**, y alterar es lo que jangle ya sabe hacer.
+
+**Por qué no un generador cualquiera.** Diatónicos al azar hay mil y no tienen nada de
+jangle. Este tendría dos fuentes propias:
+
+- **El tomo como fuente.** De Chordis Mysteriis guarda 112.071 firmas de cuatro acordes y
+  13.046 de tres, cada una con cuántas canciones la llevan (`progresiones/4/<hex>.json`, un
+  objeto `firma → [total, muestra]` en 1.024 ficheros). Para buscar, esa frecuencia no decía
+  nada; para generar es justo lo que hace falta: frecuente suena a canción, rara-pero-no-única
+  es interesante, y el mando conservador↔aventurado sale gratis de los totales. La firma es
+  invariante a transposición, así que «dado un tono» es exacto: se prueban los doce
+  arranques y se queda el que `detectKey` lleve al tono pedido. Y como la firma solo guarda
+  familias (M, m, d, a, s, 5), lo que sale son tríadas: el color lo ponen las pestañas, que
+  es donde debe estar. Los bucles de dos acordes del post-rock aparecen como `A.B.A.B` dentro
+  de las ventanas de cuatro, así que no hace falta indexar nada nuevo.
+- **La guitarra como criba.** Entre veinte candidatas, ordenar por lo que ganan en tu
+  instrumento: el coste del mejor arreglo resonante (`reharmonize` con el preset
+  `resonance`, milisegundos por candidata). No cuenta cómo suenan las tríadas peladas sino
+  **cuánto dan de sí** una vez adornadas —la pregunta del post-rock—. Con afinación elegida
+  en la pestaña, la misma criba dice qué progresiones hacen sonar *esa* afinación.
+
+**Lo que no hace falta reconectar.** El catálogo sigue guardado. Esto solo necesita **un
+JSON** con las N firmas más frecuentes y sus totales, construido una vez offline leyendo los
+1.024 cubos del índice publicado y llevado con la app: decenas de KB, cero peticiones en
+uso. Es reutilizar el trabajo del hilo 4 sin abrir la puerta que se cerró.
+
+**Los parámetros.** Tono, sí, con el aviso de siempre: `detectKey` solo sabe de mayores, así
+que menor es «relativo mayor sesgado hacia el vi», que en la práctica va bien. Longitud no
+como campo: cuatro por defecto, «más larga» encadena dos ventanas que compartan el arranque.
+El mando de rareza, y un «otra». Y las suspendidas: la familia `s` no distingue sus2 de
+sus4; para post-rock, sus2 por defecto y que la pestaña lo cambie.
+
+**Dónde va.** No es pestaña: es el patrón de `transposeTo` —rellenar el campo y
+`requestSubmit()`—, así que no hay estado nuevo y las cuatro pestañas responden al
+instante sobre lo sugerido. Con el hilo 5 cierra el bucle de componer: sugerir → mirar →
+explorar → guardar (hilo 9).
+
+**Por dónde empezar, y qué medir antes.** El JSON de firmas, porque es lo que se puede
+comprobar: qué tan concentrada está la distribución (cuánto cubren las cien primeras) y si
+la criba resonante **separa de verdad** entre candidatas frecuentes o las deja todas
+parecidas. Si no separa, la segunda fuente no aporta y el generador es solo el tomo.
