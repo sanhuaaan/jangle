@@ -338,7 +338,30 @@ sus4; para post-rock, sus2 por defecto y que la pestaña lo cambie.
 instante sobre lo sugerido. Con el hilo 5 cierra el bucle de componer: sugerir → mirar →
 explorar → guardar (hilo 9).
 
-**Por dónde empezar, y qué medir antes.** El JSON de firmas, porque es lo que se puede
-comprobar: qué tan concentrada está la distribución (cuánto cubren las cien primeras) y si
-la criba resonante **separa de verdad** entre candidatas frecuentes o las deja todas
-parecidas. Si no separa, la segunda fuente no aporta y el generador es solo el tomo.
+**Lo que se ha medido (2026-09-13), antes de tocar interfaz.** El fichero ya está:
+`progressions.json`, construido por `progressions.mjs` desde los 2.048 cubos publicados. Corte
+en cien canciones —una progresión que llevan cien canciones es una progresión común—: 4.611
+firmas de cuatro acordes y 1.633 de tres, **124 KB, 31 comprimido**. Y las dos preguntas:
+
+- **Cómo de concentrado está el tomo.** Las cien firmas de cuatro más frecuentes cubren el 37%
+  de todas las ventanas; las 2.000, el 83%. Las de tres, más aún: cien cubren el 68%. Las cinco
+  primeras son `I V I V`, `I IV I IV`, `I IV ♭VII IV`, `I V ii I` y `I V IV I`. Y **la mitad son
+  rotaciones**: de las cien firmas de cuatro más frecuentes salen 50 bucles distintos. El
+  generador tiene que fundirlas al elegir y separarlas al arrancar.
+- **Si la criba resonante separa.** Sesenta bucles frecuentes distintos realizados en G, D y E,
+  medido el mejor arreglo *sin añadir acordes* (la línea cromática `Em EmMaj7 Em7 Em6` inflaba
+  la primera medida por tener más pasos, no más resonancia). Cuerdas al aire en cuatro acordes:
+  en G de 0 a 12 con mediana 7; en D de 0 a 12 con mediana 4; en E de 0 a 11 con mediana 3.
+  Separa, y mucho. Y la correlación de rango entre frecuencia y resonancia es **0,45 / 0,10 /
+  0,36**: las más comunes no son las que más dan de sí, así que la segunda fuente no es
+  redundante. Lo que sale arriba ya suena a lo que se busca: `C G6 Dsus2 Em`, `Em A Dsus2 Em`,
+  `C#m B6 Asus2 E`.
+
+**Dos detalles que salieron midiendo.** Realizar una firma «en G» exigiendo que `detectKey`
+devuelva G descarta la mitad: los bucles eólicos (`Em C D Em`) empatan entre G y su relativo y
+el desempate se los lleva. Mejor elegir el arranque que más notas diatónicas mete y dejar que
+`detectKey` etiquete. Y la grafía: el generador debe escribir con `transposeSymbol` e
+`intervalTo` desde el tono, no con `noteName`, o en E sale `Abm` donde va `G#m`.
+
+**Lo que queda para hacerlo:** el botón con el patrón de `transposeTo`, realizar en tono,
+fundir rotaciones, la criba con `reharmonize` y el mando de rareza sobre los totales.

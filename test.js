@@ -1136,3 +1136,26 @@ test("al puntuar un título se le quita la coletilla de la edición", () => {
   // Con el original arriba del fichero —su intérprete está más transcrito— gana él.
   assert.ok(score(original, ws, 0) > score(version, ws, 0.9));
 });
+
+// ── progressions.json: la fuente del generador (hilo 10) ─────────────────
+
+const common = createRequire(import.meta.url)("./progressions.json");
+
+test("progressions.json trae firmas legibles, comunes y ordenadas", () => {
+  assert.equal(common.version, 1);
+  for (const n of [4, 3]) {
+    const rows = common.lengths[n];
+    assert.ok(rows.length > 1000, `pocas firmas de ${n}`);
+    for (const [sig, total] of rows) {
+      const parts = sig.split(".");
+      assert.equal(parts.length, n, sig);
+      assert.match(parts[0], /^0[Mmdas5]$/, `la primera va sobre sí misma: ${sig}`);
+      for (const p of parts) assert.match(p, /^(1[01]|[0-9])[Mmdas5]$/, sig);
+      assert.ok(total >= common.minSongs, `${sig} con ${total}`);
+    }
+    for (let i = 1; i < rows.length; i++) assert.ok(rows[i - 1][1] >= rows[i][1], `desorden en ${n} en ${i}`);
+  }
+  // La firma del tomo y la de aquí son la misma: si cambia una, cambian las dos.
+  assert.equal(signature(["C", "G", "Am", "F"]), "0M.7M.9m.5M");
+  assert.ok(common.lengths[4].some(([s]) => s === "0M.7M.9m.5M"), "I V vi IV tendría que ser común");
+});
