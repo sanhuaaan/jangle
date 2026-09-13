@@ -174,7 +174,7 @@ const budgetFor = progression => Math.max(1, Math.round(progression.length / 3))
 
 // Devuelve la progresión rearmonizada según `preset`, o null si la BD no da
 // digitaciones para alguno de los acordes originales.
-function reharmonize(db, progression, preset, maxVoicings = 5) {
+export function reharmonize(db, progression, preset, maxVoicings = 5) {
   const key = detectKey(progression);
   const cache = new Map();
   const voi = (sym, max) => {

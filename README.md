@@ -392,6 +392,41 @@ par de clics.
 En el repo hay uno guardado, `songbook.json`, como copia de seguridad. La app no lo carga sola: se
 importa con «Cargar cancionero», como cualquier otro.
 
+## Pedir una progresión común («…o pide una común»)
+
+Las pestañas consumen una progresión; quien compone no la tiene todavía. «Una común» abre un
+diálogo con tono, largo (cuatro o tres acordes) y un mando de común a rara, y devuelve seis
+progresiones para empezar de una e irla alterando en las pestañas. Pulsar una la sube al campo y
+sigue el camino de siempre.
+
+Salen de dos sitios, y ninguno sobra:
+
+- **El tomo.** `progressions.json` trae las progresiones que más canciones llevan en De Chordis
+  Mysteriis (el catálogo del hilo 4 de `MEJORAS.md`, hoy guardado): 4.611 firmas de cuatro
+  acordes y 1.633 de tres con al menos cien canciones cada una, con sus totales. La firma es
+  invariante a transposición (semitonos sobre el primer acorde y familia), así que se realiza en
+  el tono pedido; el mando pesa cada firma por `total^(1 − rareza)`, de lo más común a pesar
+  todas igual, y como la cola es larguísima, eso es la rareza. Lo construye `progressions.mjs`
+  desde el índice publicado, sin reconectar nada.
+- **La guitarra.** De las veinticuatro sorteadas se enseñan las seis que más dan de sí: las de
+  más cuerdas al aire por acorde en el mejor arreglo con el preset resonante de Rearmonizar.
+  Medido antes de hacerlo: la frecuencia y la resonancia van poco de la mano (correlación de
+  rango 0,1–0,45 según el tono), y por eso hace falta la criba.
+
+Lo que hay que saber:
+
+- **La realización va con lo que la app lee.** De los doce arranques posibles se elige el que
+  `detectKey` lee en el tono pedido, para que la tarjeta y la columna digan lo mismo. Como la
+  app solo sabe de tonalidades mayores, `I ♭VII IV I` sale como `V IV I V`, y un bucle eólico
+  (`Em C D Em`) se realiza en su relativo mayor. La grafía la da el tono: en Mi, `G#m`, no `Abm`.
+- La familia suspendida de la firma no distingue sus2 de sus4: sale sus2, y Sustituciones lo
+  cambia. Las de quinta no tienen digitación en la base de datos y se descartan. Las firmas de
+  una sola fundamental (`G G7 G Gsus4`) son un acorde adornado, no una progresión, y no salen.
+- El fichero se pide la primera vez que se abre el diálogo (124 KB, 31 comprimido). Sin las
+  posiciones de guitarra no hay criba y las seis van por frecuencia.
+- Los datos vienen de Chordonomicon (CC BY-NC 4.0) por De Chordis Mysteriis; solo se guardan
+  firmas y recuentos.
+
 ## Lo que hay guardado y no está puesto
 
 En [`archived/`](archived/) vive un **catálogo propio de 385.664 canciones** con sus progresiones

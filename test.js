@@ -1139,23 +1139,89 @@ test("al puntuar un título se le quita la coletilla de la edición", () => {
 
 // ── progressions.json: la fuente del generador (hilo 10) ─────────────────
 
-const common = createRequire(import.meta.url)("./progressions.json");
+const corpus = createRequire(import.meta.url)("./progressions.json");
 
 test("progressions.json trae firmas legibles, comunes y ordenadas", () => {
-  assert.equal(common.version, 1);
+  assert.equal(corpus.version, 1);
   for (const n of [4, 3]) {
-    const rows = common.lengths[n];
+    const rows = corpus.lengths[n];
     assert.ok(rows.length > 1000, `pocas firmas de ${n}`);
     for (const [sig, total] of rows) {
       const parts = sig.split(".");
       assert.equal(parts.length, n, sig);
       assert.match(parts[0], /^0[Mmdas5]$/, `la primera va sobre sí misma: ${sig}`);
       for (const p of parts) assert.match(p, /^(1[01]|[0-9])[Mmdas5]$/, sig);
-      assert.ok(total >= common.minSongs, `${sig} con ${total}`);
+      assert.ok(total >= corpus.minSongs, `${sig} con ${total}`);
     }
     for (let i = 1; i < rows.length; i++) assert.ok(rows[i - 1][1] >= rows[i][1], `desorden en ${n} en ${i}`);
   }
   // La firma del tomo y la de aquí son la misma: si cambia una, cambian las dos.
   assert.equal(signature(["C", "G", "Am", "F"]), "0M.7M.9m.5M");
-  assert.ok(common.lengths[4].some(([s]) => s === "0M.7M.9m.5M"), "I V vi IV tendría que ser común");
+  assert.ok(corpus.lengths[4].some(([s]) => s === "0M.7M.9m.5M"), "I V vi IV tendría que ser común");
+});
+
+// ── suggest.js: una progresión común para empezar ────────────────────────
+
+import { canonical, realize, roman, weight, moves, propose } from "./progressions.js";
+
+test("las rotaciones de un bucle tienen la misma forma canónica", () => {
+  const rots = ["0M.9m.5M.7M", "0m.8M.10M.3M", "0M.2M.7M.4m", "0M.5M.2m.10M"]; // C Am F G, Am F G C, F G C Am, G C Am F
+  assert.equal(new Set(rots.map(canonical)).size, 1);
+  assert.notEqual(canonical("0M.9m.5M.7M"), canonical("0M.7M.9m.5M")); // I vi IV V no es I V vi IV
+});
+
+test("realizar una firma en un tono escribe con la grafía del tono", () => {
+  const G = KEYS.indexOf("G"), E = KEYS.indexOf("E");
+  assert.deepEqual(realize("0M.7M.9m.5M", G), ["G", "D", "Em", "C"]);
+  assert.deepEqual(realize("0M.4m.9m.5M", E), ["E", "G#m", "C#m", "A"]); // no Abm ni Dbm
+  // I ♭VII IV I no existe para la app: lo lee como V IV I V, y la realización va con ella.
+  assert.deepEqual(realize("0M.10M.5M.0M", G), ["D", "C", "G", "D"]);
+  // I ♭VI ♭VII I tampoco: en Sol se lee VI IV V VI (la mediante cromática), y así lo dirá la columna.
+  assert.deepEqual(realize("0M.8M.10M.0M", G), ["E", "C", "D", "E"]);
+  assert.equal(detectKey(parseProgression("E C D E")), G);
+  // I V I V: detectKey desempata hacia el primer acorde, así que en Sol es G D G D y se lee en Sol.
+  assert.deepEqual(realize("0M.7M.0M.7M", G), ["G", "D", "G", "D"]);
+  assert.equal(detectKey(parseProgression("G D G D")), G);
+  assert.equal(detectKey(parseProgression("G C G C")), G);
+  // Un bucle eólico se realiza en el relativo mayor pedido, no se descarta.
+  assert.deepEqual(realize("0m.8M.10M.0m", G), ["Em", "C", "D", "Em"]);
+});
+
+test("los grados romanos dicen qué es la progresión", () => {
+  const G = KEYS.indexOf("G");
+  assert.equal(roman(["G", "D", "Em", "C"], G), "I V vi IV");
+  assert.equal(roman(["G", "F", "C", "Dsus2"], G), "I ♭VII IV Vsus2");
+  assert.equal(roman(["Em", "F#dim", "G", "Baug"], G), "vi vii° I III+");
+});
+
+test("una firma con una sola fundamental no es una progresión", () => {
+  assert.equal(moves("0M.0M.0M.0s"), false); // G G7 G Gsus4
+  assert.equal(moves("0M.0s.0M.0s"), false); // G Gsus2 G Gsus2
+  assert.equal(moves("0M.7M.0M.7M"), true);
+  assert.ok(corpus.lengths[4].some(([s]) => !moves(s)), "el tomo las trae, y por eso hay filtro");
+});
+
+test("el mando de rareza va de pesar lo que lleva a pesar igual", () => {
+  assert.equal(weight(1000, 0), 1000);
+  assert.equal(weight(1000, 1), 1);
+  assert.ok(weight(1000, 0.5) > weight(10, 0.5));
+});
+
+test("propose devuelve bucles distintos en el tono, cribados por resonancia", () => {
+  let seed = 7;
+  const random = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+  const G = KEYS.indexOf("G");
+  const out = propose(guitarDb, corpus, { key: G, length: 4, rare: 0.25, random });
+  assert.ok(out.length >= 4 && out.length <= 6, `${out.length} sugerencias`);
+  for (const s of out) {
+    assert.equal(s.chords.length, 4);
+    assert.ok(new Set(s.chords.map(c => c.replace(/[^A-G#b].*$/, ""))).size > 1, `un solo acorde: ${s.chords}`);
+    assert.ok(s.total >= corpus.minSongs);
+    assert.ok(s.open !== null && s.open >= 0);
+  }
+  for (let i = 1; i < out.length; i++) assert.ok(out[i - 1].open >= out[i].open, "sin ordenar");
+  // Sin BD no hay criba y manda la frecuencia.
+  const plain = propose(null, corpus, { key: G, random });
+  for (let i = 1; i < plain.length; i++) assert.ok(plain[i - 1].total >= plain[i].total);
+  assert.ok(plain.every(s => s.open === null));
 });

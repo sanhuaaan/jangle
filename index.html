@@ -127,6 +127,15 @@
        envolver en pantalla estrecha en vez de estrujar los tres controles. */
     #library-form { flex-wrap: wrap; margin-bottom: 0.5rem; }
     #library-form input { font-size: 1rem; min-width: 8rem; }
+    /* Pedir una común: tono, largo y rareza en una línea; el mando es un range,
+       que hereda el estilo del campo grande y hay que quitárselo. */
+    #suggest-form { flex-wrap: wrap; align-items: center; gap: 0.5rem 0.9rem; font-size: 0.85rem; color: var(--muted); }
+    #suggest-form select {
+      font-size: 0.85rem; padding: 0.2rem 0.55rem; border-radius: var(--radius);
+      background: var(--panel); color: var(--text); border: var(--line) solid var(--border);
+    }
+    #suggest-form input[type="range"] { flex: 0 0 7rem; padding: 0; border: none; background: none; accent-color: var(--accent); vertical-align: middle; margin: 0 0.3rem; }
+    #suggest-results strong { margin-right: 0.3rem; }
     #library-list h3 { font-size: 1rem; margin: 1rem 0 0.35rem; display: flex; gap: 0.6rem; align-items: baseline; }
     #library-list h3 button {
       background: none; color: var(--muted); border: var(--line) solid var(--border);
@@ -418,8 +427,25 @@
   </form>
   <p class="sources">
     …o tráela de <button type="button" id="open-song">una canción</button>
-    <button type="button" id="open-library">tu cancionero <span id="library-count"></span></button>
+    <button type="button" id="open-library">tu cancionero <span id="library-count"></span></button>,
+    o pide <button type="button" id="open-suggest">una común</button>
   </p>
+  <dialog id="suggest-box">
+    <h2>Una progresión común</h2>
+    <p class="why">Las progresiones que más canciones llevan en De Chordis Mysteriis, realizadas en el
+      tono que pidas y ordenadas por cuánto dan de sí en la guitarra: las que más cuerdas al aire
+      consiguen una vez adornadas. Para empezar de una común e irla alterando en las pestañas. El
+      mando va de lo más común a lo raro.</p>
+    <form id="suggest-form">
+      <label>en <select id="suggest-key"></select></label>
+      <label>de <select id="suggest-length"><option value="4">4</option><option value="3">3</option></select> acordes</label>
+      <label>común <input type="range" id="suggest-rare" min="0" max="100" value="25"> rara</label>
+      <button type="submit">Sugerir</button>
+    </form>
+    <p id="suggest-status" class="why"></p>
+    <ul id="suggest-results" class="results"></ul>
+    <p class="actions"><button type="button" class="close">Cerrar</button></p>
+  </dialog>
   <dialog id="song-box">
     <h2>Buscar una canción</h2>
     <p class="why">Título e intérprete: los acordes salen de las transcripciones mejor votadas de

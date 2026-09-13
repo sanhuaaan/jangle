@@ -3,6 +3,7 @@ import { KEYS, noteName } from "./notes.js";
 import { capoSuggestions, capoArrangements, shapeSymbol } from "./capo.js";
 import { identify, degreeShort } from "./identify.js";
 import { reharmonizations } from "./reharm.js";
+import { propose } from "./progressions.js";
 import { searchSongs, fetchSong, suggestions } from "./song.js";
 import {
   readLibrary, writeLibrary, libraryJson, parseLibrary, mergeLibrary,
@@ -964,3 +965,64 @@ function applyHash() {
 }
 window.addEventListener("hashchange", applyHash);
 applyHash();
+
+// ── Pedir una progresión común ──────────────────────────────────────────────
+// La tercera manera de rellenar el campo, para componer: cuando todavía no hay
+// progresión. Las firmas más frecuentes del tomo, realizadas en el tono que se
+// pida y cribadas por cuánto dan de sí en la guitarra (progressions.js).
+const suggestBox = document.querySelector("#suggest-box");
+const suggestKey = document.querySelector("#suggest-key");
+const suggestLength = document.querySelector("#suggest-length");
+const suggestRare = document.querySelector("#suggest-rare");
+const suggestStatus = document.querySelector("#suggest-status");
+const suggestResults = document.querySelector("#suggest-results");
+suggestKey.append(...KEYS.map(k => el("option", { value: k, textContent: k })));
+
+// El fichero se pide la primera vez que hace falta, no al cargar: son 124 KB
+// que la mayoría de las visitas no van a usar. Si falla, se vuelve a intentar.
+let corpus = null;
+const corpusReady = () => corpus ??= fetch("progressions.json")
+  .then(r => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+  .catch(err => { corpus = null; throw err; });
+
+document.querySelector("#open-suggest").addEventListener("click", () => {
+  // El tono de partida es el de lo que ya hay escrito; sin nada, Sol, que es
+  // donde la guitarra suena más sola.
+  suggestKey.value = transposeBox.hidden ? "G" : KEYS[currentKey];
+  suggestBox.showModal();
+  corpusReady().catch(() => {});
+});
+
+document.querySelector("#suggest-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  suggestResults.replaceChildren();
+  suggestStatus.textContent = "Buscando…";
+  await dbReady;
+  let data;
+  try { data = await corpusReady(); } catch { suggestStatus.textContent = "No se ha podido cargar el tomo de progresiones."; return; }
+  const key = KEYS.indexOf(suggestKey.value);
+  const list = propose(db, data, { key, length: Number(suggestLength.value), rare: suggestRare.value / 100 });
+  suggestStatus.textContent = !list.length ? "No ha salido ninguna: prueba otra vez."
+    : db ? "De más a menos cuerdas al aire por acorde, una vez adornada. Pulsa una para usarla."
+    : "Sin las posiciones de guitarra no hay criba: van por frecuencia. Pulsa una para usarla.";
+  for (const s of list) {
+    const li = el("li");
+    li.append(
+      el("strong", { textContent: s.chords.join(" ") }),
+      el("span", { className: "why", textContent: ` ${s.roman} · ${s.total.toLocaleString("es")} canciones${s.open === null ? "" : ` · ${s.open.toFixed(1)} al aire por acorde`}` }),
+    );
+    li.addEventListener("click", () => useSuggestion(s, key));
+    suggestResults.append(li);
+  }
+});
+
+// Igual que usar una parte de canción: al campo, y de ahí el camino de siempre.
+function useSuggestion(s, key) {
+  input.value = s.chords.join(" ");
+  songContext = {
+    label: `Progresión común · ${s.roman} en ${KEYS[key]} · ${s.total.toLocaleString("es")} canciones en el tomo`,
+    chords: input.value,
+  };
+  suggestBox.close();
+  form.requestSubmit();
+}

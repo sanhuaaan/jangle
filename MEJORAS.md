@@ -295,7 +295,7 @@ voicings». Resuelto eso, un hallazgo es esa cadena más una nota tuya, y «Expl
 trasteando —o sea, el hilo 5— y que se pueda pasar a alguien, que es lo que ya hacen
 descargar y cargar. Sin esas dos, es una lista de capturas de pantalla en texto.
 
-## 10. Un generador de progresiones para empezar a componer
+## 10. Un generador de progresiones para empezar a componer — hecho (2026-09-13)
 
 **La idea.** Hoy las cuatro pestañas consumen una progresión; para quien está componiendo,
 lo que no tiene es precisamente eso. Un botón junto al campo —«Sugiéreme una»— que dé una
@@ -363,5 +363,21 @@ el desempate se los lleva. Mejor elegir el arranque que más notas diatónicas m
 `detectKey` etiquete. Y la grafía: el generador debe escribir con `transposeSymbol` e
 `intervalTo` desde el tono, no con `noteName`, o en E sale `Abm` donde va `G#m`.
 
-**Lo que queda para hacerlo:** el botón con el patrón de `transposeTo`, realizar en tono,
-fundir rotaciones, la criba con `reharmonize` y el mando de rareza sobre los totales.
+**Hecho el mismo día**, tal como se planeó: `progressions.js` sortea por frecuencia, realiza
+en el tono, funde rotaciones y criba con `reharmonize` y el preset resonante; el diálogo «una
+común» va junto a la canción y el cancionero y rellena el campo por el camino de siempre. Dos
+cosas se decidieron construyendo:
+
+- **La realización sigue a `detectKey`**, no al encaje diatónico: si no, la tarjeta decía «en
+  Sol» y la columna «Tonalidad estimada: Do». Consecuencia honesta: `I ♭VII IV I` no existe
+  para la app, sale `V IV I V`. Y salió un fallo de `detectKey` que ya estaba: en empate
+  decidía el croma más bajo, así que `G D G D` se leía en Re y `G C G C` en Do —las dos firmas
+  más frecuentes del tomo, mal etiquetadas—. Ahora en empate gana el tono del primer acorde.
+- Las firmas de una sola fundamental (`0M.0M.0M.0s`, que es `G G7 G Gsus4`) se filtran: el tomo
+  las trae porque las ventanas se cortan sin mirar.
+
+**Lo que queda abierto de aquí:** «otra parte de la misma canción» —hoy volver a pulsar solo
+comparte el tono; lo que haría de una segunda progresión un estribillo es compartir acordes
+con la primera y arrancar en otro sitio, y lo que lo haría de verdad es la coocurrencia de
+firmas en las canciones del tomo, que habría que construir offline—. Y progresiones de ocho,
+encadenando dos ventanas.
