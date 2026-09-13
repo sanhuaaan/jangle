@@ -58,11 +58,13 @@ const diatonicChord = (key, deg) => noteName(key + MAJOR_STEPS[deg]) + DEGREE_SU
 export function detectKey(progression) {
   let best = 0;
   let bestScore = -1;
-  // En empate gana el tono del primer acorde: G D G D es I V en Sol antes que
-  // IV I en Re, porque un bucle se oye desde donde arranca. Sin esto decidía el
-  // croma más bajo, y las dos progresiones más comunes que hay (I V I V y
-  // I IV I IV) salían en otro tono.
-  const first = progression.length ? Note.chroma(progression[0].tonic) : -1;
+  // En empate gana el tono del primer acorde, porque un bucle se oye desde
+  // donde arranca: G D G D es I V en Sol antes que IV I en Re, y Em Bm Em Bm es
+  // vi iii en Sol antes que ii vi en Re, que para un primer acorde menor el tono
+  // es su relativo mayor. Sin esto decidía el croma más bajo, y las dos
+  // progresiones más comunes que hay (I V I V y I IV I IV) salían en otro tono.
+  const first = !progression.length ? -1
+    : (Note.chroma(progression[0].tonic) + (qualityOf(progression[0]) === "min" ? 3 : 0)) % 12;
   for (let k = 0; k < 12; k++) {
     let score = 0;
     for (const c of progression) {

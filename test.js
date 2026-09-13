@@ -1162,7 +1162,7 @@ test("progressions.json trae firmas legibles, comunes y ordenadas", () => {
 
 // ── suggest.js: una progresión común para empezar ────────────────────────
 
-import { canonical, realize, roman, weight, moves, related, propose } from "./progressions.js";
+import { canonical, realize, roman, weight, moves, related, propose, MINORS } from "./progressions.js";
 
 test("las rotaciones de un bucle tienen la misma forma canónica", () => {
   const rots = ["0M.9m.5M.7M", "0m.8M.10M.3M", "0M.2M.7M.4m", "0M.5M.2m.10M"]; // C Am F G, Am F G C, F G C Am, G C Am F
@@ -1187,11 +1187,28 @@ test("realizar una firma en un tono escribe con la grafía del tono", () => {
   assert.deepEqual(realize("0m.8M.10M.0m", G), ["Em", "C", "D", "Em"]);
 });
 
+test("en menor, el i arranca y la lectura sigue siendo la del relativo mayor", () => {
+  const G = KEYS.indexOf("G"), C = KEYS.indexOf("C");
+  assert.equal(MINORS[G], "Em");
+  assert.deepEqual(realize("0m.8M.10M.0m", G, true), ["Em", "C", "D", "Em"]);
+  // Em Bm Em Bm empata Sol con Re: el desempate va al relativo mayor del primer acorde.
+  assert.deepEqual(realize("0m.7m.0m.7m", G, true), ["Em", "Bm", "Em", "Bm"]);
+  assert.equal(detectKey(parseProgression("Em Bm Em Bm")), G);
+  assert.equal(detectKey(parseProgression("Dm Am Dm Am")), KEYS.indexOf("F"));
+  // Em A Em A es dórico y la app lo lee en Re: en menor no se inventa una lectura.
+  assert.equal(realize("0m.5M.0m.5M", G, true), null);
+  // Una firma que no arranca en el i no vale en menor, salvo para otra parte, donde basta con que esté.
+  assert.equal(realize("0M.7M.9m.5M", C, true), null);
+  assert.deepEqual(realize("0M.7M.9m.5M", C, true, false), ["C", "G", "Am", "F"]);
+});
+
 test("los grados romanos dicen qué es la progresión", () => {
   const G = KEYS.indexOf("G");
   assert.equal(roman(["G", "D", "Em", "C"], G), "I V vi IV");
   assert.equal(roman(["G", "F", "C", "Dsus2"], G), "I ♭VII IV Vsus2");
   assert.equal(roman(["Em", "F#dim", "G", "Baug"], G), "vi vii° I III+");
+  assert.equal(roman(["Em", "C", "D", "Em"], G, true), "i VI VII i");
+  assert.equal(roman(["Am", "F", "C", "G"], KEYS.indexOf("C"), true), "i VI III VII");
 });
 
 test("una firma con una sola fundamental no es una progresión", () => {
@@ -1230,6 +1247,14 @@ test("propose devuelve bucles distintos en el tono, cribados por resonancia", ()
     assert.ok(s.open !== null && s.open >= 0);
   }
   for (let i = 1; i < out.length; i++) assert.ok(out[i - 1].open >= out[i].open, "sin ordenar");
+  // En menor: todas arrancan en el i y se leen en el relativo mayor.
+  const minor = propose(guitarDb, corpus, { key: G, minor: true, random });
+  assert.ok(minor.length >= 3, `${minor.length} en menor`);
+  for (const s of minor) {
+    assert.equal(s.chords[0], "Em", s.chords.join(" "));
+    assert.match(s.roman, /^i /);
+    assert.equal(detectKey(parseProgression(s.chords.join(" "))), G);
+  }
   // Otra parte: todas emparentadas con la que hay.
   const verse = ["G", "D", "Em", "C"];
   const parts = propose(guitarDb, corpus, { key: G, from: verse, random });

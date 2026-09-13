@@ -35,6 +35,10 @@ export function canonical(sig) {
 
 const MAJOR = new Set([0, 2, 4, 5, 7, 9, 11]);
 
+// Los relativos menores de KEYS, en el mismo orden, escritos con la grafía de
+// su relativo: D#m y no Ebm, que la app escribe Fa sostenido y no Sol bemol.
+export const MINORS = ["Am", "Bbm", "Bm", "Cm", "C#m", "Dm", "D#m", "Em", "Fm", "F#m", "Gm", "G#m"];
+
 // Realizar una firma en un tono. De los doce arranques posibles gana el que
 // detectKey lee en ese tono —lo mismo que va a decir el analizador al recibirla,
 // que si no la tarjeta diría "en Sol" y la columna "Tonalidad estimada: Do"— y,
@@ -45,9 +49,17 @@ const MAJOR = new Set([0, 2, 4, 5, 7, 9, 11]);
 // acorde hace de casa: sobre la tónica si es mayor, sobre el vi si es menor.
 // Se escribe en Do y se transporta por intervalo, que es lo que da la grafía de
 // la tonalidad: en Mi sale G#m, no Abm.
-export function realize(sig, key) {
+//
+// En menor —«en Em» es «en Sol alrededor del Em», que la app no sabe más— hace
+// falta además que el i arranque (o que esté, para otra parte); y si ninguna lectura
+// cae en el relativo mayor, no se inventa: un Em A Em A la app lo lee en Re y
+// decirle al usuario "en Em" sería mentirle. Medido: la mitad de las firmas que
+// empiezan en menor entran así (el 63% por canciones); la otra mitad son
+// dóricas y parecidas.
+export function realize(sig, key, minor = false, start = true) {
   const p = parseSignature(sig);
   const shift = intervalTo("C", KEYS[key]);
+  const tonic = minor ? (key + 9) % 12 : key;
   let best = null;
   let home = null;
   for (let r = 0; r < 12; r++) {
@@ -55,21 +67,31 @@ export function realize(sig, key) {
     const chords = syms.map(s => Chord.get(s));
     if ((r + key) % 12 === (/[md]/.test(p[0][1]) ? 9 : 0)) home = syms;
     if (detectKey(chords) !== key) continue;
+    const isI = c => Note.chroma(c.tonic) === tonic && c.intervals.includes("3m");
+    // En menor el i tiene que arrancar; para otra parte, que arranca en otro
+    // sitio por definición, basta con que esté.
+    if (minor && !(start ? isI(chords[0]) : chords.some(isI))) continue;
     let fit = 0;
     for (const c of chords) for (const n of c.notes) if (MAJOR.has((Note.chroma(n) - key + 12) % 12)) fit++;
-    if (!best || fit > best.fit) best = { fit, syms };
+    const score = (minor && isI(chords[0]) ? 100 : 0) + fit;
+    if (!best || score > best.score) best = { score, syms };
   }
-  return (best ?? { syms: home }).syms;
+  return best ? best.syms : minor ? null : home;
 }
 
 // Grados romanos respecto al tono, para decir qué es la progresión y no solo
-// cómo se llama en ese tono: I V vi IV es lo mismo en Sol que en Mi.
+// cómo se llama en ese tono: I V vi IV es lo mismo en Sol que en Mi. En menor
+// se cuentan desde el i y con los grados del menor natural sin alterar (VI y
+// VII, no ♭VI y ♭VII), que es como se escriben: Em C D Em es i VI VII i.
 const ROMAN = ["I", "♭II", "II", "♭III", "III", "IV", "♯IV", "V", "♭VI", "VI", "♭VII", "VII"];
-export function roman(chords, key) {
+const ROMAN_MINOR = ["I", "♭II", "II", "III", "♯III", "IV", "♯IV", "V", "VI", "♯VI", "VII", "♯VII"];
+export function roman(chords, key, minor = false) {
+  const table = minor ? ROMAN_MINOR : ROMAN;
+  const from = minor ? (key + 9) % 12 : key;
   return chords.map(sym => {
     const c = Chord.get(sym);
     const iv = new Set(c.intervals);
-    const deg = ROMAN[(Note.chroma(c.tonic) - key + 12) % 12];
+    const deg = table[(Note.chroma(c.tonic) - from + 12) % 12];
     if (iv.has("3m")) return deg.toLowerCase() + (iv.has("5d") ? "°" : "");
     if (iv.has("3M")) return deg + (iv.has("5A") && !iv.has("5P") ? "+" : "");
     return deg + (iv.has("2M") ? "sus2" : iv.has("4P") ? "sus4" : "5");
@@ -88,8 +110,8 @@ export const moves = sig => new Set(parseSignature(sig).map(([o]) => o)).size > 
 
 // Sortea n bucles distintos según los pesos. Con reposición y fundiendo
 // rotaciones, que es más barato que quitar del saco y para veinte da igual.
-function draw(all, rare, n, random) {
-  const rows = all.filter(([sig]) => moves(sig));
+function draw(all, rare, n, random, only = () => true) {
+  const rows = all.filter(([sig]) => moves(sig) && only(sig));
   const cum = [];
   let acc = 0;
   for (const [, t] of rows) cum.push(acc += weight(t, rare));
@@ -141,10 +163,14 @@ const RESONANCE = PRESETS.find(p => p.id === "resonance");
 // de digitaciones no hay criba y manda la frecuencia. Con `from`, otra parte de
 // la misma canción: solo las emparentadas con esa progresión, y se sortean el
 // doble porque los filtros tiran la mitad.
-export function propose(db, data, { key, length = 4, rare = 0.25, from = null, draw: n = from ? 48 : 24, keep = 6, random = Math.random } = {}) {
+export function propose(db, data, { key, minor = false, length = 4, rare = 0.25, from = null, draw: n = from ? 48 : 24, keep = 6, random = Math.random } = {}) {
   const out = [];
-  for (const { sig, total } of draw(data.lengths[length] ?? [], rare, n, random)) {
-    const chords = realize(sig, key);
+  // En menor solo se sortean firmas que arrancan en menor, que es lo que suena
+  // a menor; salvo para otra parte, que tiene que arrancar en otro sitio.
+  const only = minor && !from ? sig => parseSignature(sig)[0][1] === "m" : () => true;
+  for (const { sig, total } of draw(data.lengths[length] ?? [], rare, n, random, only)) {
+    const chords = realize(sig, key, minor, !from);
+    if (!chords) continue; // en menor, una lectura que la app no daría
     if (from && !related(chords, from)) continue;
     let prog;
     try { prog = parseProgression(chords.join(" ")); } catch { continue; }
@@ -154,7 +180,7 @@ export function propose(db, data, { key, length = 4, rare = 0.25, from = null, d
       if (!v) continue; // algún acorde sin digitación en la BD (los de quinta, por ejemplo)
       open = v.open / v.steps.length;
     }
-    out.push({ chords, roman: roman(chords, key), total, open });
+    out.push({ chords, roman: roman(chords, key, minor), total, open });
   }
   return out.sort((a, b) => (b.open ?? -1) - (a.open ?? -1) || b.total - a.total).slice(0, keep);
 }

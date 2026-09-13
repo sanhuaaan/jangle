@@ -419,6 +419,12 @@ Lo que hay que saber:
   `detectKey` lee en el tono pedido, para que la tarjeta y la columna digan lo mismo. Como la
   app solo sabe de tonalidades mayores, `I ♭VII IV I` sale como `V IV I V`, y un bucle eólico
   (`Em C D Em`) se realiza en su relativo mayor. La grafía la da el tono: en Mi, `G#m`, no `Abm`.
+- **Los tonos menores están, a la manera de la app.** «En Em» es «en Sol alrededor del Em»:
+  solo firmas que arrancan en menor, realizadas con el i en la tónica, y solo si la app las lee
+  en el relativo mayor —la mitad de ellas, el 63% por canciones—. Las dóricas y parecidas
+  (`Em A Em A`) la app las lee en Re, y decir «en Em» sería mentir, así que no salen. Los grados
+  van en menor: `Em C D Em` es `i VI VII i`. Si lo escrito arranca en el relativo menor de su
+  tono, el diálogo ya lo ofrece en menor.
 - La familia suspendida de la firma no distingue sus2 de sus4: sale sus2, y Sustituciones lo
   cambia. Las de quinta no tienen digitación en la base de datos y se descartan. Las firmas de
   una sola fundamental (`G G7 G Gsus4`) son un acorde adornado, no una progresión, y no salen.

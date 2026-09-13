@@ -3,7 +3,7 @@ import { KEYS, noteName } from "./notes.js";
 import { capoSuggestions, capoArrangements, shapeSymbol } from "./capo.js";
 import { identify, degreeShort } from "./identify.js";
 import { reharmonizations } from "./reharm.js";
-import { propose } from "./progressions.js";
+import { propose, MINORS, readChord } from "./progressions.js";
 import { searchSongs, fetchSong, suggestions } from "./song.js";
 import {
   readLibrary, writeLibrary, libraryJson, parseLibrary, mergeLibrary,
@@ -976,7 +976,15 @@ const suggestLength = document.querySelector("#suggest-length");
 const suggestRare = document.querySelector("#suggest-rare");
 const suggestStatus = document.querySelector("#suggest-status");
 const suggestResults = document.querySelector("#suggest-results");
-suggestKey.append(...KEYS.map(k => el("option", { value: k, textContent: k })));
+// Mayores y sus relativos menores. «En Em» es «en Sol alrededor del Em»: la
+// app solo sabe de mayores, y el menor es lo que arranca y gira sobre el vi.
+suggestKey.append(
+  ...KEYS.map(k => el("option", { value: k, textContent: k })),
+  ...MINORS.map(m => el("option", { value: m, textContent: m })),
+);
+const chosenKey = () => (MINORS.includes(suggestKey.value)
+  ? { key: MINORS.indexOf(suggestKey.value), minor: true }
+  : { key: KEYS.indexOf(suggestKey.value), minor: false });
 
 // El fichero se pide la primera vez que hace falta, no al cargar: son 124 KB
 // que la mayoría de las visitas no van a usar. Si falla, se vuelve a intentar.
@@ -995,8 +1003,12 @@ const written = () => {
 document.querySelector("#open-suggest").addEventListener("click", () => {
   // El tono de partida es el de lo que ya hay escrito; sin nada, Sol, que es
   // donde la guitarra suena más sola.
-  suggestKey.value = transposeBox.hidden ? "G" : KEYS[currentKey];
-  suggestPart.hidden = !written().length;
+  const have = written();
+  // Si lo escrito arranca en el relativo menor de su tono, se ofrece en menor.
+  suggestKey.value = transposeBox.hidden ? "G"
+    : have.length && readChord(have[0]) === `${(currentKey + 9) % 12}m` ? MINORS[currentKey]
+    : KEYS[currentKey];
+  suggestPart.hidden = !have.length;
   suggestBox.showModal();
   corpusReady().catch(() => {});
 });
@@ -1012,8 +1024,8 @@ async function askCommon(from) {
   await dbReady;
   let data;
   try { data = await corpusReady(); } catch { suggestStatus.textContent = "No se ha podido cargar el tomo de progresiones."; return; }
-  const key = KEYS.indexOf(suggestKey.value);
-  const list = propose(db, data, { key, length: Number(suggestLength.value), rare: suggestRare.value / 100, from: from?.length ? from : null });
+  const { key, minor } = chosenKey();
+  const list = propose(db, data, { key, minor, length: Number(suggestLength.value), rare: suggestRare.value / 100, from: from?.length ? from : null });
   const how = db ? "de más a menos cuerdas al aire por acorde, una vez adornada" : "sin las posiciones de guitarra no hay criba: van por frecuencia";
   suggestStatus.textContent = !list.length ? "No ha salido ninguna: prueba otra vez."
     : from?.length ? `Comparten acordes con ${from.join(" ")} y arrancan en otro sitio; ${how}. Pulsa una para usarla.`
@@ -1024,16 +1036,16 @@ async function askCommon(from) {
       el("strong", { textContent: s.chords.join(" ") }),
       el("span", { className: "why", textContent: ` ${s.roman} · ${s.total.toLocaleString("es")} canciones${s.open === null ? "" : ` · ${s.open.toFixed(1)} al aire por acorde`}` }),
     );
-    li.addEventListener("click", () => useSuggestion(s, key, !!from?.length));
+    li.addEventListener("click", () => useSuggestion(s, suggestKey.value, !!from?.length));
     suggestResults.append(li);
   }
 }
 
 // Igual que usar una parte de canción: al campo, y de ahí el camino de siempre.
-function useSuggestion(s, key, part) {
+function useSuggestion(s, keyName, part) {
   input.value = s.chords.join(" ");
   songContext = {
-    label: `${part ? "Otra parte" : "Progresión común"} · ${s.roman} en ${KEYS[key]} · ${s.total.toLocaleString("es")} canciones en el tomo`,
+    label: `${part ? "Otra parte" : "Progresión común"} · ${s.roman} en ${keyName} · ${s.total.toLocaleString("es")} canciones en el tomo`,
     chords: input.value,
   };
   suggestBox.close();

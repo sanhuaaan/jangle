@@ -372,7 +372,12 @@ cosas se decidieron construyendo:
   Sol» y la columna «Tonalidad estimada: Do». Consecuencia honesta: `I ♭VII IV I` no existe
   para la app, sale `V IV I V`. Y salió un fallo de `detectKey` que ya estaba: en empate
   decidía el croma más bajo, así que `G D G D` se leía en Re y `G C G C` en Do —las dos firmas
-  más frecuentes del tomo, mal etiquetadas—. Ahora en empate gana el tono del primer acorde.
+  más frecuentes del tomo, mal etiquetadas—. Ahora en empate gana el tono del primer acorde,
+  y si ese acorde es menor, su relativo mayor: `Em Bm Em Bm` se lee en Sol, no en Re. Con eso
+  las firmas que arrancan en menor y la app lee en su relativo pasan del 16% al 50% (63% por
+  canciones), y eso es lo que hace posible ofrecer **tonos menores**: «en Em» es «en Sol
+  alrededor del Em». Lo que no entra son las dóricas (`Em A Em A`, que se lee en Re sin
+  empate): ahí el límite es el modelo de un solo modo, el `ponytail:` de `rules.js`.
 - Las firmas de una sola fundamental (`0M.0M.0M.0s`, que es `G G7 G Gsus4`) se filtran: el tomo
   las trae porque las ventanas se cortan sin mirar.
 
