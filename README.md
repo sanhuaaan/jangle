@@ -238,6 +238,28 @@ pestaña usa digitaciones generadas y aquella las formas curadas de la base de d
 preguntas distintas: qué es posible si preparas el instrumento, contra cómo se toca con las formas
 que ya conoces.
 
+## Mapa de voces: qué se queda y qué se mueve
+
+Debajo de cada arreglo de Rearmonizar, Cejilla y Afinaciones —y arriba, para la progresión tal
+cual la escribes, con la primera posición de cada acorde— hay un **mapa de voces** plegado. Una
+fila por voz, una columna por acorde: entre dos celdas, una raya si la nota se queda (verde si
+además es el mismo dedo o la misma cuerda al aire, que ni se toca) y el número de semitonos si se
+mueve. El `°` marca la cuerda al aire; una voz que entra se señala con un punto, y donde se va, la
+fila se corta. Debajo, una frase: qué notas duran toda la progresión, cuáles varios acordes, y
+cuántas voces se quedan quietas de un acorde al siguiente.
+
+Es análisis, no generador: sirve para mirar una progresión y entender por qué suena a continuidad
+o a movimiento —«funciona porque estas tres voces no se mueven mientras cambia el bajo»— y para
+entender por qué una rearmonización dada flota más que otra. Por eso va **pegado al voicing
+concreto**, no al nombre del acorde: `C → Am → F` con posiciones abiertas tiene una C que dura
+tres acordes en la 2ª cuerda y baja a B en el G; con otras posiciones no.
+
+No hay cálculo nuevo: el emparejamiento de voces es el mismo `pairVoices` de Rearmonizar (que
+ahora dice también qué voz va con cuál), las notas comunes el mismo `commonBetween`, y las notas
+salen de los trastes de cada paso con la afinación y la cejilla de su tarjeta. Las cabeceras del
+mapa abren cada voicing en el mástil, igual que los nombres del diagrama; cada celda dice en su
+tooltip cuerda y traste.
+
 ## Identificar un acorde desde el mástil
 
 En el **identificador de acordes** hay un mástil de 15 trastes donde cada cuerda suena una sola nota:

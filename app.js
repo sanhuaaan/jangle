@@ -9,7 +9,8 @@ import {
   readLibrary, writeLibrary, libraryJson, parseLibrary, mergeLibrary,
   saveSection, removeSection, removeSong, songKey,
 } from "./library.js";
-import { findShape, shapeSvg, fretboardSvg, openString, absoluteFrets, MAX_FRET, TUNINGS } from "./guitar.js";
+import { findShape, shapeSvg, fretboardSvg, openString, absoluteFrets, playablePositions, MAX_FRET, TUNINGS, STRINGS } from "./guitar.js";
+import { voiceLines } from "./continuity.js";
 import { tuningArrangements } from "./generate.js";
 
 // Crear un nodo con sus propiedades de una vez: es el gesto más repetido del
@@ -155,6 +156,15 @@ form.addEventListener("submit", async e => {
     textContent: `Tonalidad estimada: ${KEYS[detectKey(progression)]} mayor · pulsa cualquier acorde para verlo en el mástil`,
   }));
 
+  // El mapa de voces de la progresión tal cual, con la primera posición de
+  // cada acorde: la misma que enseña el tooltip y la que carga el mástil.
+  if (db) {
+    const firsts = progression.map(c => playablePositions(db, c.symbol, 1)[0]);
+    if (firsts.every(Boolean)) {
+      summary.append(continuityDetails(firsts, progression.map(c => c.symbol), TUNINGS[0].midis, 0, "mapa de voces · con la primera posición de cada acorde"));
+    }
+  }
+
   renderTranspose(progression);
   renderSubs(progression);
 
@@ -215,7 +225,7 @@ function capoCard(a) {
     li.append(" ", el("small", {
       textContent: `${plural(a.open, "cuerda al aire", "cuerdas al aire")} · ${plural(a.still, "nota que no se mueve", "notas que no se mueven")}`,
     }));
-    li.append(chartOf(a));
+    li.append(chartOf(a), continuityDetails(a.steps, a.steps.map(s => s.sounding), TUNINGS[0].midis, a.capo));
   }
 
   const cp = capoColors.get(a.capo);
@@ -405,7 +415,7 @@ function renderReharm(progression) {
       step.append(name, svg, el("span", { className: "top", textContent: s.topNote }));
       chart.append(step);
     }
-    li.append(chart);
+    li.append(chart, continuityDetails(v.steps, v.steps.map(s => s.symbol)));
 
     li.append(el("p", {
       className: "line",
@@ -468,7 +478,7 @@ function retuneCard(a) {
     }));
     chart.append(step);
   }
-  li.append(chart);
+  li.append(chart, continuityDetails(a.steps, a.steps.map(s => s.sounding), a.tuning.midis, a.capo));
   if (!a.capo) {
     // Probar con cejilla: un desplegable que, la primera vez que se abre,
     // calcula esa afinación con cejilla del 1 al 5 y enseña dentro las tres
@@ -497,6 +507,77 @@ function renderRetune(progression) {
   retuneProg = progression;
   const candidates = [...TUNINGS, ...(custom.midis ? [{ ...custom, notes: custom.midis.map(noteName).join(" ") }] : [])];
   for (const a of tuningArrangements(progression, candidates)) retuneList.append(retuneCard(a));
+}
+
+// ── Mapa de voces: qué notas se quedan y cuáles se mueven ──────────────────
+// Va dentro de cada arreglo, plegado, porque es la explicación de por qué ese
+// arreglo suena como suena: las mismas notas del diagrama, seguidas de acorde
+// en acorde. Una fila por voz, una columna por acorde; la raya entre celdas
+// dice que la nota se queda (verde si además es el mismo dedo o la misma
+// cuerda al aire), el número cuántos semitonos se mueve. Las cabeceras abren
+// cada voicing en el mástil, igual que los nombres del diagrama.
+function continuityDetails(steps, names, tuning = TUNINGS[0].midis, capo = 0, label = "mapa de voces") {
+  const map = voiceLines(steps, tuning, capo);
+  const det = el("details", { className: "voices" });
+  det.append(el("summary", { textContent: label }));
+  const grid = el("div", { className: "voicegrid" });
+  grid.style.setProperty("--cols", steps.length);
+  names.forEach((name, k) => {
+    const head = el("span", { className: "chord head", textContent: name });
+    head.dataset.frets = steps[k].frets.map(f => (f < 0 ? -1 : f + capo)).join(",");
+    if (capo) head.dataset.capo = capo;
+    if (tuning !== TUNINGS[0].midis) head.dataset.midis = tuning.join(",");
+    head.style.gridColumn = k + 1;
+    grid.append(head);
+  });
+  map.lines.forEach((l, r) => {
+    l.cells.forEach((c, k) => {
+      const span = el("span", { className: "cell" });
+      span.style.gridRow = r + 2;
+      span.style.gridColumn = k + 1;
+      if (c) {
+        const kind = c.delta === null ? (k ? "enter" : "start")
+          : c.held ? "held" : Math.abs(c.delta) > 4 ? "leap" : "move";
+        span.classList.add(kind);
+        if (c.still) span.classList.add("still");
+        if (c.open) span.classList.add("open");
+        const link = el("span", { className: "link" });
+        if (c.delta) link.textContent = (c.delta > 0 ? "+" : "−") + Math.abs(c.delta);
+        if (kind === "enter") link.textContent = "·";
+        const where = `${STRINGS[c.string][0]} ${c.open ? "al aire" : `traste ${c.fret + capo}`}`;
+        const what = c.still ? "se queda sin tocarla" : c.held ? "la misma nota, en otra cuerda"
+          : c.delta !== null ? `${c.delta > 0 ? "sube" : "baja"} ${plural(Math.abs(c.delta), "semitono", "semitonos")}`
+          : k ? "voz que entra" : "";
+        span.title = `${c.note} · ${where}${what ? ` · ${what}` : ""}`;
+        span.append(link, el("span", { className: "note", textContent: c.note }));
+      }
+      grid.append(span);
+    });
+  });
+  det.append(grid, el("p", { className: "why", textContent: describeMap(map, steps.length) }));
+  return det;
+}
+
+// La frase de debajo del mapa: lo que se ve, dicho en música y no en tabla.
+function describeMap(map, n) {
+  const parts = [];
+  const whole = map.runs.filter(r => r.length === n);
+  const names = rs => [...new Set(rs.map(r => r.note))].join(" y ");
+  if (whole.length) parts.push(`${names(whole)} ${whole.length === 1 ? "se queda" : "se quedan"} toda la progresión`);
+  // Las rachas más cortas, agrupadas por duración: dos voces con la misma nota
+  // (la E de la 1ª y la de la 4ª) se nombran una vez, que el mapa ya las separa.
+  const byLength = new Map();
+  for (const r of map.runs.filter(r => r.length < n)) byLength.set(r.length, (byLength.get(r.length) ?? new Set()).add(r.note));
+  const some = [...byLength].map(([len, notes]) => `${[...notes].join(", ")} ${len} acordes`);
+  if (some.length) parts.push(`${whole.length ? "y " : ""}${some.join("; ")}`);
+  if (!parts.length) parts.push("ninguna nota dura más de un acorde: todo se mueve");
+  const held = map.transitions.reduce((a, t) => a + t.held, 0);
+  const paired = map.transitions.reduce((a, t) => a + t.paired, 0);
+  const moved = map.transitions.reduce((a, t) => a + t.moved, 0);
+  const structural = map.transitions.reduce((a, t) => a + t.structural, 0);
+  const tail = `${held} de ${paired} voces se quedan quietas de un acorde al siguiente, ${plural(moved, "semitono", "semitonos")} de movimiento en total`
+    + (structural ? ` y ${plural(structural, "voz que entra o sale", "voces que entran o salen")}` : "");
+  return `${parts.join(" ")}. ${tail[0].toUpperCase()}${tail.slice(1)}.`;
 }
 
 // ── Identificador de acordes: mástil clicable → nombre del acorde ───────────

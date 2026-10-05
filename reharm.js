@@ -86,25 +86,29 @@ export function pairVoices(a, b) {
   }
   // Vuelta atrás para contar qué pasó: semitonos movidos, voces que no se
   // mueven, saltos grandes y voces que se quedaron sin pareja.
+  // Y los pares en sí (índice en a, índice en b), que el mapa de voces los
+  // necesita para seguir cada voz de acorde en acorde.
   let i = a.length, j = b.length, moved = 0, held = 0, leaps = 0, structural = 0;
+  const pairs = [];
   while (i > 0 || j > 0) {
     if (i > 0 && j > 0 && D[i][j] === D[i - 1][j - 1] + Math.abs(a[i - 1] - b[j - 1])) {
       const d = Math.abs(a[i - 1] - b[j - 1]);
       moved += d;
       if (d === 0) held++;
       if (d > 4) leaps++;
+      pairs.push([i - 1, j - 1]);
       i--; j--;
     } else if (i > 0 && D[i][j] === D[i - 1][j] + UNPAIRED) { structural++; i--; }
     else { structural++; j--; }
   }
-  return { moved, held, leaps, structural };
+  return { moved, held, leaps, structural, pairs: pairs.reverse() };
 }
 
 export const openStrings = frets => frets.filter(f => f === 0).length;
 const stillBetween = (a, b) => a.frets.reduce((n, f, i) => n + (f >= 0 && f === b.frets[i] ? 1 : 0), 0);
 // Una nota quieta que además es al aire cuenta doble: no se toca ni al cambiar.
 const stillOpenBetween = (a, b) => a.frets.reduce((n, f, i) => n + (f === 0 && b.frets[i] === 0 ? 1 : 0), 0);
-const commonBetween = (a, b) => [...a.pcs].filter(x => b.pcs.has(x)).length;
+export const commonBetween = (a, b) => [...a.pcs].filter(x => b.pcs.has(x)).length;
 
 // Lo que cuesta encadenar dos digitaciones según el preset. Cada factor mide
 // una cosa y el peso dice cuánto importa; lo que pesa cero ni se calcula.

@@ -54,13 +54,15 @@
        canción y cejillas de Cejilla/Afinaciones). Solo Chrome/Edge por ahora;
        el resto abre a saco, como antes. */
     :root { interpolate-size: allow-keywords; }
-    #subs details::details-content, #capo details::details-content, #retune details::details-content {
+    #subs details::details-content, #capo details::details-content, #retune details::details-content,
+    #reharm details::details-content, #summary details::details-content {
       block-size: 0;
       overflow-y: clip;
       transition: block-size 0.25s ease, content-visibility 0.25s allow-discrete;
     }
     #subs details[open]::details-content, #capo details[open]::details-content,
-    #retune details[open]::details-content, #song-box[open]::details-content,
+    #retune details[open]::details-content, #reharm details[open]::details-content,
+    #summary details[open]::details-content, #song-box[open]::details-content,
     #library-box[open]::details-content { block-size: auto; }
     h1 { font-size: 1.4rem; }
     .tabs { display: flex; gap: 0.25rem; margin-top: 1.75rem; border-bottom: var(--line) solid var(--separator); }
@@ -331,6 +333,30 @@
     .chart .step.changed { border-color: var(--green); background: #22302a; }
     .chart .step svg { width: 3.6rem; height: auto; color: #c8c8d8; }
     .chart .top { font-family: ui-monospace, monospace; font-size: 0.8rem; color: #6fc79c; }
+    /* Mapa de voces: una fila por voz, una columna por acorde. La raya entre
+       celdas es la nota que se queda (verde: el mismo dedo o la misma cuerda al
+       aire, ni se toca); el número, los semitonos que se mueve. El ° marca la
+       cuerda al aire. Se desplaza por dentro si no cabe, como .chart. */
+    .voices summary { cursor: pointer; font-size: 0.85rem; color: var(--muted); padding: 0.25rem 0; }
+    .voices summary:hover { color: var(--accent-soft); }
+    .voicegrid {
+      display: grid; grid-template-columns: repeat(var(--cols), minmax(3.8rem, 1fr));
+      column-gap: 0; row-gap: 0.1rem; padding: 0.3rem 0 0.2rem;
+      overflow-x: auto; overscroll-behavior-x: contain;
+      font-family: ui-monospace, monospace; font-size: 0.85rem;
+    }
+    .voicegrid .head { grid-row: 1; justify-self: end; font-weight: 600; padding: 0 0 0.25rem; }
+    .voicegrid .cell { display: flex; align-items: center; min-height: 1.35rem; }
+    .voicegrid .link { flex: 1; text-align: center; font-size: 0.7rem; color: var(--muted); margin: 0 0.3rem; }
+    .voicegrid .held .link { height: 2px; background: var(--accent); }
+    .voicegrid .still .link { background: var(--green); }
+    .voicegrid .start .link { visibility: hidden; }
+    .voicegrid .leap .link { color: #d98c6b; }
+    .voicegrid .note { color: var(--muted); min-width: 1.5rem; text-align: right; padding-right: 0.2rem; }
+    .voicegrid .held .note { color: var(--text); }
+    .voicegrid .still .note { color: var(--green); }
+    .voicegrid .open .note::after { content: "°"; opacity: 0.7; }
+    #summary .voices { margin: -0.5rem 0 1rem; }
     .line { font-family: ui-monospace, monospace; font-size: 0.85rem; color: var(--accent-soft); margin: 0.2rem 0 0; }
 
     /* ── Banco de trabajo a dos columnas en pantalla ancha ─────────────────

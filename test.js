@@ -639,13 +639,13 @@ test("la línea se mueve hacia donde pide cada intención", () => {
 
 test("el emparejamiento de voces cuenta movimiento, quietas y voces sueltas", () => {
   // El ejemplo de MEJORAS.md: C (G-C-E) → Am (A-C-E) es G→A y dos voces quietas.
-  assert.deepEqual(pairVoices([55, 60, 64], [57, 60, 64]), { moved: 2, held: 2, leaps: 0, structural: 0 });
+  assert.deepEqual(pairVoices([55, 60, 64], [57, 60, 64]), { moved: 2, held: 2, leaps: 0, structural: 0, pairs: [[0, 0], [1, 1], [2, 2]] });
   // Una voz nueva no se empareja a lo loco: cuenta como cambio estructural.
   const p = pairVoices([55, 60, 64], [55, 60, 64, 67]);
   assert.equal(p.structural, 1);
   assert.equal(p.moved, 0);
   // Un salto de quinta es un salto, no dos voces sueltas.
-  assert.deepEqual(pairVoices([60], [67]), { moved: 7, held: 0, leaps: 1, structural: 0 });
+  assert.deepEqual(pairVoices([60], [67]), { moved: 7, held: 0, leaps: 1, structural: 0, pairs: [[0, 0]] });
 });
 
 test("cada preset gana en lo suyo", () => {
@@ -1264,4 +1264,58 @@ test("propose devuelve bucles distintos en el tono, cribados por resonancia", ()
   const plain = propose(null, corpus, { key: G, random });
   for (let i = 1; i < plain.length; i++) assert.ok(plain[i - 1].total >= plain[i].total);
   assert.ok(plain.every(s => s.open === null));
+});
+
+
+// ── continuity.js: el mapa de voces ───────────────────────────────────────
+
+import { voicesOf, voiceLines } from "./continuity.js";
+
+test("pairVoices dice también qué voz va con cuál", () => {
+  const p = pairVoices([48, 52, 55, 60, 64], [45, 52, 57, 60, 64]); // C abierto → Am abierto
+  assert.deepEqual(p.pairs, [[0, 0], [1, 1], [2, 2], [3, 3], [4, 4]]);
+  assert.equal(p.held, 3);
+  assert.equal(p.moved, 5);
+  const q = pairVoices([60, 64, 67], [60, 67]); // una voz desaparece
+  assert.equal(q.structural, 1);
+  assert.deepEqual(q.pairs, [[0, 0], [2, 1]]);
+});
+
+test("las voces salen de los trastes, con su cuerda, y la cejilla y la afinación cuentan", () => {
+  const std = TUNINGS[0].midis;
+  assert.deepEqual(voicesOf([-1, 3, 2, 0, 1, 0], std).map(v => v.midi), [48, 52, 55, 60, 64]);
+  assert.deepEqual(voicesOf([0, 0, 0, 0, 0, 0], std, 2).map(v => v.midi), std.map(m => m + 2));
+  assert.equal(voicesOf([-1, 3, 2, 0, 1, 0], std)[4].string, 5); // la E aguda es la 1ª
+  assert.ok(voicesOf([-1, 3, 2, 0, 1, 0], std)[4].open);
+});
+
+test("el mapa de voces sigue cada nota de acorde en acorde", () => {
+  const std = TUNINGS[0].midis;
+  const C = [-1, 3, 2, 0, 1, 0], Am = [-1, 0, 2, 2, 1, 0], F = [1, 3, 3, 2, 1, 1], G = [3, 2, 0, 0, 0, 3];
+  const map = voiceLines([C, Am, F, G].map(frets => ({ frets })), std);
+  const top = map.lines[0]; // la más aguda: la 1ª al aire, que en F y G se pisa
+  assert.deepEqual(top.cells.map(c => c && c.note), ["E", "E", "F", "G"]);
+  assert.deepEqual(top.cells.map(c => c && c.delta), [null, 0, 1, 2]);
+  assert.ok(top.cells[1].still && top.cells[1].open, "la E se queda al aire sin tocarla");
+  // La C de la 2ª cuerda dura tres acordes (C, Am, F) y en G baja a B.
+  const cLine = map.lines.find(l => l.cells[0]?.note === "C" && l.cells[0].string === 4);
+  assert.deepEqual(cLine.cells.map(c => c && c.note), ["C", "C", "C", "B"]);
+  assert.ok(cLine.cells[2].still);
+  assert.equal(cLine.cells[3].delta, -1);
+  assert.equal(map.transitions.length, 3);
+  assert.equal(map.transitions[0].held, 3);
+  assert.equal(map.transitions[0].common, 2); // C y E
+  assert.ok(map.runs.some(r => r.note === "C" && r.length === 3));
+  assert.equal(map.runs[0].length, 3, "la racha más larga va primero");
+  // F abre una voz nueva (el bajo de la cejilla): una línea que empieza en la tercera columna.
+  assert.ok(map.lines.some(l => !l.cells[0] && !l.cells[1] && l.cells[2]));
+});
+
+test("una nota que dura toda la progresión es un pedal, y las rachas se cortan donde la voz se va", () => {
+  const std = TUNINGS[0].midis;
+  const steps = [[-1, -1, 2, 2, 0, 0], [-1, -1, 0, 2, 0, 0], [-1, -1, 2, 0, 0, 0]].map(frets => ({ frets })); // 1ª y 2ª al aire siempre
+  const map = voiceLines(steps, std);
+  const whole = map.runs.filter(r => r.length === 3).map(r => r.note);
+  assert.deepEqual(whole, ["E", "B"]);
+  assert.ok(map.lines.slice(0, 2).every(l => l.cells.slice(1).every(c => c && c.still)), "ni se tocan");
 });

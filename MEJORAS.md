@@ -388,3 +388,16 @@ no son el mismo bucle girado; se sortean el doble porque los filtros tiran la mi
 queda abierto:** la de verdad —qué otras partes llevan las canciones del tomo que tienen ésta,
 coocurrencia de firmas por canción, que habría que construir offline desde los ficheros de
 canciones— y las progresiones de ocho, encadenando dos ventanas.
+
+## 11. Mapa de voces — hecho (2026-10-05)
+
+Qué notas se quedan y cuáles se mueven a lo largo de un arreglo, voz a voz, para entender por
+qué una progresión flota aunque cambien los nombres: la idea general de que la continuidad
+armónica sale de las relaciones entre voces. Hecho con lo que ya había —`pairVoices` dice ahora
+qué voz va con cuál, `commonBetween` se exporta— y colgado de cada tarjeta de las tres pestañas
+y del resumen (`continuity.js`, `continuityDetails` en app.js). Las notas salen de los trastes
+con la afinación y cejilla de cada tarjeta, así que el mismo mapa vale en las tres.
+
+**Lo que queda abierto:** marcar en el propio diagrama (`shapeSvg`) qué cuerdas se quedan de un
+acorde al siguiente, que es la manera de llevarlo al mástil sin otro dibujo; y que el analizador
+del mástil, al cargar un voicing desde el mapa, resalte las notas que vienen del acorde anterior.
