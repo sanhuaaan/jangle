@@ -541,21 +541,44 @@ function continuityDetails(steps, names, tuning = TUNINGS[0].midis, capo = 0, la
         span.classList.add(kind);
         if (c.still) span.classList.add("still");
         if (c.open) span.classList.add("open");
-        const link = el("span", { className: "link" });
-        if (c.delta) link.textContent = (c.delta > 0 ? "+" : "−") + Math.abs(c.delta);
-        if (kind === "enter") link.textContent = "·";
+        // La primera columna no lleva raya: no hay acorde anterior del que
+        // venir, y el hueco vacío que dejaba descolgaba el mapa hacia dentro.
+        if (k) {
+          const link = el("span", { className: "link" });
+          if (c.delta) link.textContent = (c.delta > 0 ? "+" : "−") + Math.abs(c.delta);
+          if (kind === "enter") link.textContent = "·";
+          span.append(link);
+        }
         const where = `${STRINGS[c.string][0]} ${c.open ? "al aire" : `traste ${c.fret + capo}`}`;
         const what = c.still ? "se queda sin tocarla" : c.held ? "la misma nota, en otra cuerda"
           : c.delta !== null ? `${c.delta > 0 ? "sube" : "baja"} ${plural(Math.abs(c.delta), "semitono", "semitonos")}`
           : k ? "voz que entra" : "";
         span.title = `${c.note} · ${where}${what ? ` · ${what}` : ""}`;
-        span.append(link, el("span", { className: "note", textContent: c.note }));
+        span.append(el("span", { className: "note", textContent: c.note }));
       }
       grid.append(span);
     });
   });
-  det.append(grid, el("p", { className: "why", textContent: describeMap(map, steps.length) }));
+  det.append(grid, legendOf(), el("p", { className: "why", textContent: describeMap(map, steps.length) }));
   return det;
+}
+
+// La leyenda del mapa, con los mismos trazos que la rejilla: se lee una vez
+// debajo del propio mapa, que es donde surge la duda, no en un manual aparte.
+function legendOf() {
+  const legend = el("p", { className: "legend" });
+  const stroke = (cls, symbol = "") => {
+    const s = el("span", { className: `stroke ${cls}` });
+    s.append(el("span", { className: "link", textContent: symbol }));
+    return s;
+  };
+  legend.append(
+    stroke("held"), " la nota se queda · ",
+    stroke("held still"), " y sin tocar el dedo · ",
+    stroke("move", "−2"), " baja 2 semitonos · ",
+    stroke("enter", "·"), " voz que entra · ° al aire",
+  );
+  return legend;
 }
 
 // La frase de debajo del mapa: lo que se ve, dicho en música y no en tabla.
