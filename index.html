@@ -351,7 +351,7 @@
       overflow-x: auto; overscroll-behavior-x: contain;
       font-family: ui-monospace, monospace; font-size: 0.85rem;
     }
-    .voicegrid .head { grid-row: 1; justify-self: end; font-weight: 600; padding: 0 0.2rem 0.25rem 0; }
+    .voicegrid .head { grid-row: 1; justify-self: end; font-weight: 600; padding: 0 0.75rem 0.25rem 0; }
     .voicegrid .cell { display: flex; align-items: center; min-height: 1.35rem; }
     /* La raya son los dos pseudoelementos y el número va en medio; cuando la
        nota se queda no hay número y gap 0 los funde en una raya seguida. */
@@ -370,7 +370,12 @@
     .voicegrid .note { color: var(--muted); min-width: 1.5rem; text-align: right; padding-right: 0.2rem; }
     .voicegrid .held .note { color: var(--text); }
     .voicegrid .still .note { color: var(--green); }
-    .voicegrid .open .note::after { content: "°"; opacity: 0.7; }
+    /* Todas las notas reservan el hueco del °: si no, las que suenan al aire
+       corren sus letras a la izquierda y la columna sale dentada (la cabecera
+       lo compensa en su padding). Y el ° visible va en claro, que apagado al
+       70% no había quien lo viera. */
+    .voicegrid .note::after { content: "°"; display: inline-block; width: 0.55rem; visibility: hidden; }
+    .voicegrid .open .note::after { visibility: visible; color: var(--text); }
     #summary .voices { margin: -0.5rem 0 1rem; }
     .line { font-family: ui-monospace, monospace; font-size: 0.85rem; color: var(--accent-soft); margin: 0.2rem 0 0; }
 
