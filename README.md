@@ -245,7 +245,10 @@ cual la escribes, con la primera posición de cada acorde— hay un **mapa de vo
 fila por voz, una columna por acorde: entre dos celdas, una raya si la nota se queda (verde si
 además es el mismo dedo o la misma cuerda al aire, que ni se toca) y el número de semitonos si se
 mueve. El `°` marca la cuerda al aire; una voz que entra se señala con un punto, y donde se va, la
-fila se corta. Debajo, una frase: qué notas duran toda la progresión, cuáles varios acordes, y
+fila se corta. Una voz que entra ocupa, si puede, una fila que quedó libre en el acorde anterior y
+le cae cerca (a una quinta como mucho): el hueco y el punto dicen que es otra voz, y un bajo que
+entra y sale en cada acorde se lee en una fila en vez de en una escalera. Las filas van de aguda a
+grave sin cruzarse en ninguna columna. Debajo, una frase: qué notas duran toda la progresión, cuáles varios acordes, y
 cuántas voces se quedan quietas de un acorde al siguiente.
 
 Es análisis, no generador: sirve para mirar una progresión y entender por qué suena a continuidad

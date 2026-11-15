@@ -31,10 +31,17 @@ const cell = (v, from) => {
   };
 };
 
+// Hasta dónde puede caer una voz que entra de la última nota de la fila que
+// ocupa: una quinta. Más lejos ya no se lee como la misma voz.
+const REUSE = 7;
+
 // Las líneas de un arreglo: una por voz, una celda por acorde (o null donde la
 // voz no suena). Cada voz del primer acorde abre una línea; cuando pairVoices
-// deja una voz sin pareja, la línea se corta, y la que aparece abre la suya.
-// Van de agudo a grave, como en una partitura.
+// deja una voz sin pareja, la línea se corta, y la que aparece ocupa una fila
+// que quedó libre —que no sonara en el acorde anterior, para que el hueco diga
+// que es otra voz— y cercana en altura; si no hay, abre la suya. Sin eso, un
+// bajo que entra y sale en cada acorde (F E F · C E F) se repartía en una
+// escalera de filas de una celda. Van de agudo a grave, como en una partitura.
 export function voiceLines(steps, tuning, capo = 0) {
   const cols = steps.map(s => voicesOf(s.frets, tuning, capo));
   const n = steps.length;
@@ -51,6 +58,24 @@ export function voiceLines(steps, tuning, capo = 0) {
       active[i].cells[k] = cell(next[j], prev[i]);
       following[j] = active[i];
     }
+    // Las que entran, a la fila libre más cercana, las parejas más próximas primero.
+    const last = l => l.cells.findLast(Boolean).midi;
+    const free = lines.filter(l => !l.cells[k - 1] && !l.cells[k]);
+    const offers = [];
+    next.forEach((v, j) => {
+      if (following[j]) return;
+      for (const l of free) {
+        const d = Math.abs(last(l) - v.midi);
+        if (d <= REUSE) offers.push({ j, l, d });
+      }
+    });
+    offers.sort((a, b) => a.d - b.d);
+    for (const { j, l } of offers) {
+      if (following[j] || l.cells[k]) continue;
+      l.cells[k] = cell(next[j]);
+      if (!orderable(lines, k)) { l.cells[k] = null; continue; }
+      following[j] = l;
+    }
     next.forEach((v, j) => {
       if (following[j]) return;
       const l = line(n);
@@ -60,10 +85,60 @@ export function voiceLines(steps, tuning, capo = 0) {
     });
     active = following;
   }
-  const first = l => l.cells.find(Boolean).midi;
-  lines.sort((a, b) => first(b) - first(a));
-  return { lines, transitions, runs: runsOf(lines) };
+  return { lines: ordered(lines), transitions, runs: runsOf(lines) };
 }
+
+// Qué fila va sobre cuál: en cada columna, la que suena más aguda encima. Hasta
+// la columna `upTo`, que al reaprovechar filas solo cuenta lo ya colocado.
+function stacking(lines, upTo = (lines[0]?.cells.length ?? 0) - 1) {
+  const below = new Map(lines.map(l => [l, new Set()]));
+  const above = new Map(lines.map(l => [l, 0]));
+  for (let k = 0; k <= upTo; k++) {
+    // Por alturas: todas las de una altura, sobre todas las de la siguiente
+    // (dos voces en la misma nota no dicen nada entre ellas).
+    const groups = new Map();
+    for (const l of lines) if (l.cells[k]) groups.set(l.cells[k].midi, [...(groups.get(l.cells[k].midi) ?? []), l]);
+    const heights = [...groups.keys()].sort((a, b) => b - a);
+    for (let i = 1; i < heights.length; i++) {
+      for (const hi of groups.get(heights[i - 1])) {
+        for (const lo of groups.get(heights[i])) {
+          if (below.get(hi).has(lo)) continue;
+          below.get(hi).add(lo);
+          above.set(lo, above.get(lo) + 1);
+        }
+      }
+    }
+  }
+  return { below, above };
+}
+
+// Las filas en orden, de aguda a grave. Ninguna nota sola representa una fila
+// —una voz sube, baja, entra y sale—, así que se respeta a la vez lo que dice
+// cada columna y la altura media decide lo que las columnas dejan libre. Si no
+// hay orden posible sin cruzar dos voces, devuelve las que se quedan sin sitio
+// al final de `out` con `ok` en falso.
+function stack(lines, upTo) {
+  const { below, above } = stacking(lines, upTo);
+  const mean = l => { const cs = l.cells.filter(Boolean); return cs.reduce((a, c) => a + c.midi, 0) / cs.length; };
+  const height = new Map(lines.map(l => [l, mean(l)]));
+  const out = [];
+  const left = new Set(lines);
+  let ok = true;
+  while (left.size) {
+    const ready = [...left].filter(l => !above.get(l));
+    if (!ready.length) ok = false;
+    const pick = (ready.length ? ready : [...left]).reduce((a, b) => (height.get(b) > height.get(a) ? b : a));
+    left.delete(pick);
+    out.push(pick);
+    for (const l of below.get(pick)) above.set(l, above.get(l) - 1);
+  }
+  return { out, ok };
+}
+
+// Una fila solo se reaprovecha si después sigue habiendo una manera de
+// ordenarlas todas sin cruzar dos voces en ninguna columna.
+const orderable = (lines, k) => stack(lines, k).ok;
+const ordered = lines => stack(lines).out;
 
 // Las rachas: una nota que se queda dos, tres, cuatro acordes seguidos. Es lo
 // que se busca a simple vista en el mapa y lo que se cuenta debajo. Ordenadas

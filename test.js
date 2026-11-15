@@ -1311,6 +1311,35 @@ test("el mapa de voces sigue cada nota de acorde en acorde", () => {
   assert.ok(map.lines.some(l => !l.cells[0] && !l.cells[1] && l.cells[2]));
 });
 
+test("una voz que entra ocupa la fila que quedó libre en vez de abrir otra", () => {
+  // Psycho Killer con cejilla 5: el bajo entra y sale en cada acorde (F · E F · E F…).
+  // Antes eran trece filas en escalera, la mayoría de una sola nota.
+  const Fadd9 = [-1, 3, 0, 0, 3, 0], Gsus2 = [-1, -1, 0, 2, 3, 0], Am7 = [0, 2, 0, 0, 0, 0], C6 = [3, 2, 0, 0, 0, 0];
+  const frets = [Fadd9, Gsus2, Am7, Fadd9, Gsus2, C6, Fadd9, Gsus2, Am7, Fadd9, Gsus2, C6, Fadd9, Gsus2];
+  const map = voiceLines(frets.map(f => ({ frets: f })), TUNINGS[0].midis, 5);
+  assert.equal(map.lines.length, 6);
+  const bass = map.lines[4].cells.map(c => c && c.note);
+  assert.deepEqual(bass, ["F", null, "E", "F", null, "E", "F", null, "E", "F", null, "E", "F", null]);
+  assert.equal(map.lines[4].cells[2].delta, null, "tras el hueco es otra voz que entra, no un movimiento");
+});
+
+test("las filas del mapa no cruzan voces en ninguna columna", () => {
+  for (const text of ["F G Am F G C F G Am F G C F G", "C G Am Em F C F G", "D Bm G A", "C E7 Am C7 F Fm C G7", "Em C G D Em C G D"]) {
+    const p = parseProgression(text);
+    const arrangements = [
+      ...capoArrangements(guitarDb, p).map(a => [a.steps, a.capo]),
+      ...reharmonizations(guitarDb, p).filter(v => v.steps).map(v => [v.steps, 0]),
+    ];
+    for (const [steps, capo] of arrangements) {
+      const map = voiceLines(steps, TUNINGS[0].midis, capo);
+      steps.forEach((_, k) => {
+        const col = map.lines.map(l => l.cells[k]).filter(Boolean).map(c => c.midi);
+        assert.ok(col.every((m, i) => !i || m <= col[i - 1]), `${text}, acorde ${k + 1}: ${col.join(" ")}`);
+      });
+    }
+  }
+});
+
 test("una nota que dura toda la progresión es un pedal, y las rachas se cortan donde la voz se va", () => {
   const std = TUNINGS[0].midis;
   const steps = [[-1, -1, 2, 2, 0, 0], [-1, -1, 0, 2, 0, 0], [-1, -1, 2, 0, 0, 0]].map(frets => ({ frets })); // 1ª y 2ª al aire siempre
