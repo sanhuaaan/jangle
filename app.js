@@ -206,6 +206,23 @@ function transposeTo(target) {
   form.requestSubmit();
 }
 
+// Usar una propuesta: lo mismo que transponer, con otros acordes. La propuesta
+// pasa a ser la progresión y todo se recalcula sobre ella, así que se puede
+// seguir trasteando desde ahí; atrás deshace. `openAt` dice qué acorde dejar
+// abierto en Sustituciones, para seguir con el que se estaba mirando.
+let openSub = null;
+function useProgression(symbols, openAt = null) {
+  input.value = symbols.join(" ");
+  openSub = openAt;
+  form.requestSubmit();
+}
+
+const useButton = (text, title, onClick) => {
+  const b = el("button", { type: "button", className: "use", textContent: text, title });
+  b.addEventListener("click", onClick);
+  return b;
+};
+
 document.querySelector("#t-down").addEventListener("click", () => transposeTo(KEYS[(currentKey + 11) % 12]));
 document.querySelector("#t-up").addEventListener("click", () => transposeTo(KEYS[(currentKey + 1) % 12]));
 keySelect.addEventListener("change", () => transposeTo(keySelect.value));
@@ -332,12 +349,17 @@ function chartOf(a) {
 // de arriba, que sí lleva enlace.
 function renderSubs(progression) {
   const suggestions = suggest(progression);
+  const symbols = progression.map(c => c.symbol);
+  const open = openSub ?? 0;
+  const keepInView = openSub !== null;
+  openSub = null;
   progression.forEach((c, i) => {
     const mine = suggestions.filter(s => s.index === i);
     if (!mine.length) return;
     const li = document.createElement("li");
     const box = document.createElement("details");
-    box.open = i === 0;
+    box.open = i === open;
+    if (keepInView && box.open) requestAnimationFrame(() => box.scrollIntoView({ block: "nearest" }));
     box.append(el("summary", {
       innerHTML: `<strong>${c.symbol}</strong> <small>· acorde ${i + 1} de ${progression.length} · ${mine.length} opciones</small>`,
     }));
@@ -354,9 +376,15 @@ function renderSubs(progression) {
       for (const s of group) {
         const opt = document.createElement("li");
         s.replacement.forEach((sym, k) => opt.append(k ? " " : "", chordSpan(sym)));
+        // Se queda abierto el acorde que se estaba mirando: tras añadir delante
+        // (Dm7 G7 delante de C) sigue siendo el último de los nuevos.
+        const next = [...symbols.slice(0, i), ...s.replacement, ...symbols.slice(i + 1)];
         opt.append(
           " ",
           el("small", { textContent: `(${s.rule})` }),
+          " ",
+          useButton("usar", `Poner ${s.replacement.join(" ")} en la progresión`,
+            () => useProgression(next, i + s.replacement.length - 1)),
           el("p", { className: "why", textContent: s.why }),
         );
         list.append(opt);
@@ -395,10 +423,12 @@ function renderReharm(progression) {
 
   for (const v of versions) {
     const li = document.createElement("li");
-    li.append(
-      el("h3", { textContent: v.intention.name }),
-      el("p", { className: "why", textContent: v.intention.why }),
-    );
+    const head = el("h3", { textContent: v.intention.name });
+    const symbols = v.steps.map(s => s.symbol);
+    if (v.steps.some(s => s.changed)) {
+      head.append(" ", useButton("usar esta versión", `Poner ${symbols.join(" ")} en la progresión`, () => useProgression(symbols)));
+    }
+    li.append(head, el("p", { className: "why", textContent: v.intention.why }));
 
     const chart = document.createElement("div");
     chart.className = "chart";

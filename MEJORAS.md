@@ -175,6 +175,10 @@ deshacer y el enlace compartible. Un «Explorar» que solo se lleve **los acorde
 tarjeta (`Cmaj7 Am7 F6 G7sus4` en vez de `C Am F G`) es ese mismo gesto y cabe en cinco
 líneas.
 
+**Hecha esa media (2026-11-21).** Botón **usar** en cada opción de Sustituciones y en cada
+versión de Rearmonizar: se lleva los acordes, no las digitaciones, por `useProgression` en
+app.js. Lo que sigue abierto es lo de abajo, partir de la realización.
+
 **Lo que no cabe ahí.** Lo que pides es partir de la **realización**, no de los símbolos,
 y eso choca con dos cosas. Una, los motores arrancan libres: `reharmonize` monta sus capas
 desde `optionsFor` y `bestChain` empieza cobrando `nodeCost` en la capa 0 —no hay por

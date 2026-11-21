@@ -185,6 +185,12 @@
     /* Cada grupo de opciones (adornar/cambiar/añadir) en su propia tarjeta. */
     #subs .kind { border: var(--line) solid var(--border); border-radius: var(--radius); padding: 0.6rem 1rem 0.75rem; margin: 0.75rem 0; }
     .other-capos button { font-size: 0.8rem; padding: 0.15rem 0.6rem; }
+    /* Usar una propuesta: discreto junto a ella, como los de transponer. */
+    button.use {
+      font-size: 0.75rem; font-weight: normal; padding: 0.05rem 0.5rem; margin-left: 0.25rem; vertical-align: 0.1em;
+      background: var(--panel); color: var(--accent-soft); border: var(--line) solid var(--border);
+    }
+    button.use:hover { background: var(--panel-high); border-color: var(--accent); color: var(--text); }
     /* Rótulo de sección, compartido por los grupos de opciones y el identificador. */
     #subs h4, #readout h3 {
       font-size: 0.7rem;

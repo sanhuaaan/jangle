@@ -46,6 +46,12 @@ hacen, que es la decisión de verdad antes de mirar la regla concreta:
 - **Cambiar** — otro acorde en su lugar, que hace el mismo papel (`C → Am`, `Em`, `Cm`).
 - **Añadir** — acordes que lo preparan o lo alargan, repartiéndose su tiempo (`C → Dm7 G7 C`, `Fm C`, `Bb7 C`).
 
+Cada opción lleva un botón **usar** que la pone en la progresión, y lo mismo cada versión de
+**Rearmonizar** (**usar esta versión**, salvo en la que ya es la que tienes). Es el gesto de
+transponer con otros acordes: reescribe el campo y todo se recalcula sobre la propuesta, así que se
+sigue trasteando desde ahí, y **atrás deshace**. En Sustituciones se queda abierto el acorde que
+estabas mirando.
+
 Al pie de esa columna está el **identificador de acordes**, que va al revés: marcas pulsaciones en un
 mástil de 15 trastes y te dice qué acorde forman. Funciona sin escribir nada en el buscador, y está
 siempre a la vista — no se abre ni se cierra, así que nunca empuja lo que estabas leyendo.
