@@ -218,7 +218,7 @@ function useProgression(symbols, openAt = null) {
 }
 
 const useButton = (text, title, onClick) => {
-  const b = el("button", { type: "button", className: "use", textContent: text, title });
+  const b = el("button", { type: "button", className: "apply", textContent: text, title });
   b.addEventListener("click", onClick);
   return b;
 };
