@@ -258,8 +258,12 @@ function capoCard(a) {
     for (const ext of pc.extensions) {
       const row = document.createElement("li");
       const withOpen = dbShape && openString(dbShape, ext.stringIdx);
+      // El color va por acorde distinto, no por aparición: usarlo lo pone en
+      // todas las veces que suena ese acorde. Va en tono real, como el campo.
       row.append("→ ", withCapo(extChordSpan(ext, sh), withOpen, a.capo),
-        ` (${ext.note} en ${ext.string} al aire)`);
+        ` (${ext.note} en ${ext.string} al aire)`,
+        useButton("usar", `Poner ${ext.as} en lugar de ${pc.chord} en toda la progresión`,
+          () => useProgression(capoProg.map(s => (s === pc.chord ? ext.as : s)))));
       exts.append(row);
     }
     const block = document.createElement("div");
@@ -271,12 +275,14 @@ function capoCard(a) {
 }
 
 let capoColors = new Map();
+let capoProg = []; // los símbolos de la progresión, para usar un color desde cualquier tarjeta
 let capoExtra = []; // cejillas que el ranking dejó fuera, en su orden
 const remainingCapoLabel = () =>
   `ver otra cejilla · ${capoExtra.length === 1 ? "queda una" : `quedan ${capoExtra.length}`}`;
 
 function renderCapo(progression) {
-  capoColors = new Map(capoSuggestions(progression).map(cp => [cp.capo, cp]));
+  capoProg = progression.map(c => c.symbol);
+  capoColors =new Map(capoSuggestions(progression).map(cp => [cp.capo, cp]));
   // Sin la base de datos no hay digitaciones que elegir, así que queda el menú.
   const arrangements = db ? capoArrangements(db, progression) : [];
   const all = arrangements.length ? arrangements : [...capoColors.values()].map(cp => ({ capo: cp.capo }));

@@ -50,7 +50,8 @@ Cada opción lleva un botón **usar** que la pone en la progresión, y lo mismo 
 **Rearmonizar** (**usar esta versión**, salvo en la que ya es la que tienes). Es el gesto de
 transponer con otros acordes: reescribe el campo y todo se recalcula sobre la propuesta, así que se
 sigue trasteando desde ahí, y **atrás deshace**. En Sustituciones se queda abierto el acorde que
-estabas mirando.
+estabas mirando. Los colores de **Cejilla** («y además, si buscas color») también lo llevan: como
+van por acorde y no por aparición, `F → Fadd9` cambia todas las F de la progresión.
 
 Al pie de esa columna está el **identificador de acordes**, que va al revés: marcas pulsaciones en un
 mástil de 15 trastes y te dice qué acorde forman. Funciona sin escribir nada en el buscador, y está
