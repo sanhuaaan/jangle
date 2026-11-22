@@ -235,6 +235,17 @@ hacerlo y en el mapa de voces queda repartida entre filas. Y **usar estos acorde
 Cejilla: te llevas a la progresión los adornos que esa afinación hace sonar (`C Am F G` en CGCGCD
 es `Csus2 Am7 Fadd9 Gsus2`) y sigues desde Sustituciones o Cejilla, aunque no reafines.
 
+Y cada tarjeta dice **a qué cejilla equivalen sus colores**: *«Sus colores son los de la estándar
+con cejilla en 3: los tienes en Cejilla sin reafinar»*. No es una forma de hablar. Los colores (qué
+adorno pone cada cuerda al aire sobre cada acorde) dependen solo de qué notas suenan al aire, y las
+de cada afinación con nombre caben en las de la estándar con una sola cejilla: CGCGCD (C G D) en la
+3, Open C en la 5, Open G y DADGAD sin ella. Drop C, D estándar, Open Dm, Open E y C estándar
+necesitan la 8, la 9 o la 10, más allá de lo que prueba Cejilla. Medido sobre catorce progresiones,
+ninguno de los 1.201 colores de las afinaciones faltaba en Cejilla, y daban menos (5,7 por
+progresión frente a 10,5 con la mejor cejilla): las afinaciones abiertas repiten notas. Por eso
+Afinaciones no tiene su propio «si buscas color»: reafinar compra **dónde** suenan las notas —el
+bordón en el bajo, el registro, más cuerdas al aire a la vez—, no **qué** colores hay.
+
 Cada tarjeta lleva también un desplegable **«probar con cejilla»** que añade la cejilla como dimensión del
 setup: prueba esa afinación con cejilla del 1 al 5 y enseña las tres que más resuenan. Para
 `D G A D` gana Open D con `D · Gsus2 · A6 · Dmaj7` y 19 cuerdas al aire, frente a las 10 de la

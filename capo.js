@@ -66,6 +66,25 @@ export function capoSuggestions(progression, maxFret = 7) {
   return out.sort((a, b) => b.perChord.length - a.perChord.length || total(b) - total(a) || a.capo - b.capo);
 }
 
+// Qué cejilla en estándar da los mismos colores que una afinación: la más baja
+// cuyas cuerdas al aire contienen todas las notas al aire de la afinación. Los
+// colores de arriba dependen solo de qué notas suenan al aire, no de en qué
+// cuerda ni en qué octava, así que esa cejilla ofrece al menos los mismos.
+// Medido (2026-11-22): las quince afinaciones con nombre caben en una sola
+// cejilla (Open G sin ella, CGCGCD en la 3, Open C en la 5…) y sobre catorce
+// progresiones ni uno de sus 1.201 colores faltaba en la pestaña Cejilla. Lo
+// que reafinar da de verdad es dónde suenan —bordón, registro, más cuerdas al
+// aire a la vez—, no qué colores. Null si no cabe en ninguna (una afinación
+// personalizada rara); puede devolver 8 a 11, más allá de lo que prueba Cejilla.
+export function colorCapo(midis) {
+  const standard = new Set(STRINGS.map(([, m]) => m % 12));
+  const open = [...new Set(midis.map(m => m % 12))];
+  for (let capo = 0; capo < 12; capo++) {
+    if (open.every(c => standard.has((c - capo + 12) % 12))) return capo;
+  }
+  return null;
+}
+
 // ── Arreglo con cuerdas al aire ─────────────────────────────────────────────
 //
 // Lo de arriba dice qué colores pone a tu alcance cada cejilla; esto dice cómo

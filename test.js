@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { Chord, Note } from "tonal";
 import { parseProgression, suggest, detectKey, transposeSymbol, intervalTo, rootOf, RULES, KINDS } from "./rules.js";
 import { reharmonizations, pairVoices, PRESETS } from "./reharm.js";
-import { capoSuggestions, capoArrangements, shapeSymbol } from "./capo.js";
+import { capoSuggestions, capoArrangements, shapeSymbol, colorCapo } from "./capo.js";
 import { parseSearch, parseTab, suggestionSlug, decodeEntities } from "./song.js";
 import { findShape, shapeSvg, fretboardSvg, openString, absoluteFrets, playablePositions, STRINGS, TUNINGS, MAX_FRET } from "./guitar.js";
 import { NOTES, KEYS } from "./notes.js";
@@ -975,6 +975,24 @@ test("el arreglo de cejilla ordena por lo que resuena y sale tocable", () => {
     // Las cuentas que se enseñan salen de las digitaciones elegidas, no de otro sitio.
     assert.equal(a.open, a.steps.reduce((n, s) => n + s.open, 0));
   }
+});
+
+test("los colores de una afinación son los de la estándar con alguna cejilla", () => {
+  const byName = name => TUNINGS.find(t => t.name === name).midis;
+  assert.equal(colorCapo(TUNINGS[0].midis), 0);
+  assert.equal(colorCapo(byName("Open G")), 0); // D G B ya están al aire en estándar
+  assert.equal(colorCapo(byName("CGCGCD")), 3); // C G D: E A D G B subidas tres trastes dan G C F Bb D
+  assert.equal(colorCapo(byName("Open C")), 5);
+  assert.equal(colorCapo(byName("Open E")), 9); // más allá de lo que prueba Cejilla
+  // Todas las afinaciones con nombre caben en una sola cejilla: es lo que se midió.
+  for (const t of TUNINGS) assert.notEqual(colorCapo(t.midis), null, `${t.name} no cabe en ninguna cejilla`);
+  // Una que mete notas que la estándar no junta nunca: E F F# G Ab A.
+  assert.equal(colorCapo([40, 41, 42, 43, 44, 45]), null);
+  // Y la paleta de verdad cabe: lo que C, G y D al aire ponen sobre C Am F G
+  // (D sobre C, G y D sobre Am, G y D sobre F, C sobre G) sale con la cejilla en 3.
+  const atThree = new Set(capoSuggestions(parseProgression("C Am F G"), 7)
+    .find(cp => cp.capo === 3).perChord.flatMap(pc => pc.extensions.map(e => e.as)));
+  for (const c of ["Cadd9", "Am7", "Am11", "Fadd9", "F6", "Gsus4"]) assert.ok(atThree.has(c), `${c} no está en la cejilla 3`);
 });
 
 test("el arreglo de cejilla prefiere las digitaciones que dejan cuerdas al aire", () => {

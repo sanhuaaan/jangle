@@ -1,6 +1,6 @@
 import { parseProgression, suggest, detectKey, transposeSymbol, intervalTo, rootOf, KINDS } from "./rules.js";
 import { KEYS, noteName } from "./notes.js";
-import { capoSuggestions, capoArrangements, shapeSymbol, RESONANT } from "./capo.js";
+import { capoSuggestions, capoArrangements, shapeSymbol, RESONANT, colorCapo } from "./capo.js";
 import { identify, degreeShort } from "./identify.js";
 import { PRESETS } from "./reharm.js";
 import { propose, MINORS, readChord } from "./progressions.js";
@@ -512,6 +512,20 @@ function retuneCard(a) {
     li.append(el("p", {
       className: "why",
       textContent: `Bordón: ${list} ${held.length === 1 ? "suena" : "suenan"} al aire toda la progresión.`,
+    }));
+  }
+  // Los colores de una afinación no son nuevos: son los de la estándar con
+  // alguna cejilla (colorCapo). Decirlo es el enlace con Cejilla, y deja claro
+  // que reafinar compra dónde suenan, no qué suena.
+  const same = a.tuning.id === "standard" ? null : colorCapo(a.tuning.midis.map(m => m + a.capo));
+  if (same !== null) {
+    li.append(el("p", {
+      className: "why hint",
+      textContent: same === 0
+        ? "Sus colores son los de la estándar sin cejilla: los tienes en Cejilla sin reafinar. Lo que cambia es dónde suenan."
+        : same <= 7
+          ? `Sus colores son los de la estándar con cejilla en ${same}: los tienes en Cejilla sin reafinar. Lo que cambia es dónde suenan.`
+          : `Sus colores son los de la estándar con cejilla en ${same}, más arriba de lo que prueba Cejilla (hasta el 7).`,
     }));
   }
   li.append(continuityDetails(a.steps, symbols, a.tuning.midis, a.capo));
