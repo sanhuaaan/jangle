@@ -123,6 +123,19 @@ siguiente: buscar rearmonización y cejilla a la vez.
   centro. Si algún día se quiere, la maquinaria está: es exponer el vector de
   pesos en la interfaz.
 
+**La pestaña se fundió con Cejilla (2026-11-22).** En uso, Sustituciones y
+Cejilla iban juntas —tú decides, con «usar»— y Rearmonizar se quedaba aparte,
+decidiendo por ti. Sus seis presets son ahora un selector de intención encima
+de las tarjetas de cejilla (`capoArrangements` recibe el preset), con lo que
+«buscar rearmonización y cejilla a la vez» quedó hecho por el lado barato: solo
+adornos. Medido antes, sobre catorce progresiones: línea descendente perfecta
+en 13 frente a 9, ascendente en 14 frente a 12, pedal igual; lo que se perdía
+(cinco cambios de verdad en 42 versiones de línea y, en continuidad y
+resonancia, la línea cromática interna) está en Sustituciones. Las digitaciones
+de `generate.js` no mejoraban ninguna línea y en movimiento mínimo y
+continuidad tardaban un minuto: fuera. `reharmonize` sigue vivo como criba de
+«una común».
+
 ## 4. Fuente de canciones propia a partir de Chordonomicon — hecho y guardado (2026-08-19)
 
 Se hizo entero y se retiró el mismo día, después de usarlo. Lo que se construyó sigue en pie:

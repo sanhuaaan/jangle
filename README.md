@@ -46,8 +46,8 @@ hacen, que es la decisión de verdad antes de mirar la regla concreta:
 - **Cambiar** — otro acorde en su lugar, que hace el mismo papel (`C → Am`, `Em`, `Cm`).
 - **Añadir** — acordes que lo preparan o lo alargan, repartiéndose su tiempo (`C → Dm7 G7 C`, `Fm C`, `Bb7 C`).
 
-Cada opción lleva un botón **usar** que la pone en la progresión, y lo mismo cada versión de
-**Rearmonizar** (**usar esta versión**, salvo en la que ya es la que tienes). Es el gesto de
+Cada opción lleva un botón **usar** que la pone en la progresión, y lo mismo cada arreglo de
+**Cejilla** (**usar estos acordes**, salvo si no adorna nada). Es el gesto de
 transponer con otros acordes: reescribe el campo y todo se recalcula sobre la propuesta, así que se
 sigue trasteando desde ahí, y **atrás deshace**. En Sustituciones se queda abierto el acorde que
 estabas mirando. Los colores de **Cejilla** («y además, si buscas color») también lo llevan: como
@@ -145,8 +145,17 @@ enseñan las tres cejillas que más resuenan; el resto sale dosificado con el bo
 cejilla»**, que en cada pulsación saca la siguiente del ranking, dice cuántas quedan y se va con la
 última — el ranking propone, pero a lo mejor la canción pide justo la cejilla que no ganó.
 
-Arriba, **cómo se toca**: el arreglo que más resuena detrás de esa cejilla, con un diagrama por
-acorde y la cuenta de lo que se gana. Para `C Am F G` la mejor sale con cejilla en el traste 5, donde
+Arriba, **cómo se toca**: el arreglo que mejor cumple lo que buscas detrás de esa cejilla, con un
+diagrama por acorde y la cuenta de lo que se gana. **Lo que buscas** se elige encima de las
+tarjetas, entre seis intenciones: **máxima resonancia** (por defecto: mandan las cuerdas al aire,
+que es a lo que se viene a esta pestaña), **línea descendente**, **línea ascendente** y **nota pedal
+arriba** (la voz aguda baja, sube o se queda por grados conjuntos; debajo de cada diagrama sale su
+nota y debajo del arreglo la línea entera), **movimiento mínimo** (cada voz a lo más cercano) y
+**máxima continuidad** (lo compartido se queda sonando donde está). Las cejillas se ordenan por cómo
+cumple cada una esa intención, y la elegida se recuerda en el navegador. Así Sustituciones dice
+**qué acordes** y Cejilla **cómo tocarlos**: dónde, y buscando qué.
+
+Con la resonancia, para `C Am F G` la mejor sale con cejilla en el traste 5, donde
 la progresión se toca con formas de G6, Em7, Cadd9 y Dsus2 — **14 cuerdas al aire y 11 notas que no
 se mueven** entre acordes, frente a las 10 y 7 de tocarla sin cejilla. Al pulsar cualquier acorde del
 arreglo se abre en el mástil **con su cejilla puesta**: se dibuja la barra en el traste que toque, las
@@ -161,8 +170,9 @@ puro: qué cuerda al aire cae sobre qué extensión de cada acorde.
 Las dos mitades comparten una sola ordenación, la del arreglo, porque es la que sabe si algo se puede
 tocar de verdad.
 
-**Cómo se busca el arreglo.** Es el mismo camino mínimo **y el mismo sistema de costes** que usa la
-rearmonización, con su preset de máxima resonancia:
+**Cómo se busca el arreglo.** Es un camino mínimo sobre **un sistema de costes con pesos** (más
+abajo, en *Qué fue de Rearmonizar*), y cada intención es un vector de pesos sobre él. Con la
+resonante:
 cada acorde ofrece sus adornos (add9, sus2, 6, maj7, m7… los de la columna *Adornar*, que cambian el
 color pero no la función) y cada adorno sus digitaciones de la base de datos, y se paga por lo que se
 pierde de resonancia. Vale una cuerda al aire, vale más una nota que no se mueve —misma cuerda, mismo
@@ -171,51 +181,35 @@ guitarra eso no es que la nota se comparta, es que sigue sonando sola mientras l
 sitio. Hay un peaje pequeño por adornar, para que a igualdad de resonancia gane el acorde tal como lo
 escribiste, y otro por saltar de posición con la mano.
 
-Solo se admiten adornos a propósito: sustituir el acorde por otro o meterle acordes delante ya es
-rearmonizar, y para eso está su pestaña. Y las formas se filtran por dónde caen de verdad en el
+Solo se admiten adornos a propósito: sustituir el acorde por otro o meterle acordes delante es cosa
+de Sustituciones, donde lo decides tú. Y las formas se filtran por dónde caen de verdad en el
 mástil, que detrás de una cejilla en el 7 un traste 6 de la forma es el 13 real.
 
-## Rearmonizar la progresión entera
+Al pulsar cualquier acorde del arreglo se abre en el analizador **esa digitación concreta**, no la
+primera de la base de datos, que es justamente la que hace la línea o la que resuena.
 
-La pestaña de **Sustituciones** da opciones sueltas: para cuatro acordes ya son medio centenar de
-sugerencias independientes, y montar el arreglo queda de tu parte. **Rearmonizar** hace ese trabajo:
-elige unas cuantas que encajen entre sí y devuelve la progresión completa, tocable de principio a fin.
+## Qué fue de Rearmonizar
 
-El criterio para que encajen lo pone un **sistema de costes con pesos**: una sola función mide lo
+Hubo una cuarta pestaña, **Rearmonizar**, que devolvía la progresión entera rearmonizada con cada
+una de esas seis intenciones: elegía ella las sustituciones (hasta un tercio de la progresión) y las
+digitaciones, sin cejilla. Se quedaba aparte de Sustituciones y Cejilla, que dejan la decisión en
+tus manos y se usan juntas, así que sus intenciones pasaron a la pestaña Cejilla (noviembre de 2026).
+Antes de quitarla se midió, sobre catorce progresiones comunes: con solo adornos y cejilla, la línea
+descendente sale perfecta en 13 frente a sus 9 y la ascendente en 14 frente a 12; la nota pedal
+empata. Lo que se dejaba eran cinco cambios en 42 versiones de línea (`F → Fm`, `C → Am`…) y, con
+continuidad y resonancia, casi siempre la línea cromática interna (`Am AmMaj7 Am7 Am6`): todo eso
+está en Sustituciones a un clic.
+
+**El sistema de costes** que comparten Cejilla y Afinaciones nació ahí: una sola función mide lo
 que pasa entre dos digitaciones —movimiento de cada voz, la voz de arriba, notas quietas, notas
 comunes, voces que aparecen o desaparecen, saltos grandes, cuerdas al aire, desplazamiento de la
-mano— y cada **versión es un vector de pesos** sobre ella. Tres persiguen la voz de arriba
-(descendente, ascendente, nota pedal) y otras tres priorizan otra cosa: **movimiento mínimo** (cada
-voz va a lo que tiene más cerca), **máxima continuidad** (lo compartido se queda sonando donde está)
-y **máxima resonancia** (mandan las cuerdas al aire, el mismo criterio que la pestaña de cejilla).
-Ninguna se presenta como la correcta: cada tarjeta enseña los mismos números —cuerdas al aire, notas
-comunes, semitonos de movimiento entre voces— para poder compararlas, y si dos versiones acaban en
-el mismo arreglo se enseña una sola vez.
+mano— y cada intención es un **vector de pesos** sobre ella. El movimiento se mide **emparejando las
+voces de forma óptima**: con las notas ordenadas de grave a agudo, el emparejamiento de movimiento
+mínimo nunca cruza voces, así que se encuentra con un alineamiento donde una voz que aparece o
+desaparece cuenta como cambio estructural, no como salto.
 
-El movimiento entre dos digitaciones se mide **emparejando las voces de forma óptima**: con las
-notas ordenadas de grave a agudo, el emparejamiento de movimiento mínimo nunca cruza voces, así que
-se encuentra con un alineamiento donde una voz que aparece o desaparece cuenta como cambio
-estructural, no como salto.
-
-Cada criterio cambia qué acordes salen y con qué digitación. Para `C Am F G7` la versión
-descendente propone `C Amadd9 F G7`, con la voz de arriba en `C → B → A → G`: la novena entra
-precisamente porque su `B` completa la bajada. La de movimiento mínimo propone `C Am Fmaj7 G13`,
-que cruza la progresión entera moviendo 7 semitonos en total, y la de máxima continuidad descubre
-sola el cliché de línea `C · Am AmMaj7 Am7 Am6 · F · G7`, con 14 notas comunes.
-
-Es un camino mínimo (Viterbi) sobre un grafo por capas: cada hueco de la progresión ofrece varios
-acordes, cada acorde varias digitaciones de la base de datos, y el coste de encadenar dos lo pone el
-vector de pesos de cada versión. Sobre eso mandan tres reglas de sentido común:
-
-- El **primer acorde no se toca**, que es el que planta la tonalidad.
-- No se admiten dos acordes iguales seguidos si el original tenía movimiento ahí: eso no es
-  rearmonizar, es quedarse sin un acorde.
-- Hay **presupuesto de cambios** (un tercio de la progresión). Sin tope, un `Fm` prestado en el sitio
-  justo deja de ser un hallazgo y se convierte en otra canción. Se cuenta en medios: adornar un acorde
-  gasta la mitad que cambiarlo por otro, porque no lo es.
-
-Al pulsar cualquier acorde del arreglo se abre en el analizador **esa digitación concreta**, no la
-primera de la base de datos, que es justamente la que hace la línea.
+El motor de la rearmonización con sustituciones (`reharmonize` en `reharm.js`, un Viterbi con
+presupuesto de cambios) sigue en pie: es la criba que ordena las progresiones de «una común».
 
 ## Afinaciones: qué preparación le sienta mejor
 
@@ -247,7 +241,7 @@ que ya conoces.
 
 ## Mapa de voces: qué se queda y qué se mueve
 
-Debajo de cada arreglo de Rearmonizar, Cejilla y Afinaciones —y arriba, para la progresión tal
+Debajo de cada arreglo de Cejilla y Afinaciones —y arriba, para la progresión tal
 cual la escribes, con la primera posición de cada acorde— hay un **mapa de voces** plegado. Una
 fila por voz, una columna por acorde: entre dos celdas, una raya si la nota se queda (verde si
 además es el mismo dedo o la misma cuerda al aire, que ni se toca) y el número de semitonos si se
@@ -260,11 +254,11 @@ cuántas voces se quedan quietas de un acorde al siguiente.
 
 Es análisis, no generador: sirve para mirar una progresión y entender por qué suena a continuidad
 o a movimiento —«funciona porque estas tres voces no se mueven mientras cambia el bajo»— y para
-entender por qué una rearmonización dada flota más que otra. Por eso va **pegado al voicing
+entender por qué un arreglo dado flota más que otro. Por eso va **pegado al voicing
 concreto**, no al nombre del acorde: `C → Am → F` con posiciones abiertas tiene una C que dura
 tres acordes en la 2ª cuerda y baja a B en el G; con otras posiciones no.
 
-No hay cálculo nuevo: el emparejamiento de voces es el mismo `pairVoices` de Rearmonizar (que
+No hay cálculo nuevo: el emparejamiento de voces es el mismo `pairVoices` del sistema de costes (que
 ahora dice también qué voz va con cuál), las notas comunes el mismo `commonBetween`, y las notas
 salen de los trastes de cada paso con la afinación y la cejilla de su tarjeta. Las cabeceras del
 mapa abren cada voicing en el mástil, igual que los nombres del diagrama; cada celda dice en su
@@ -441,7 +435,7 @@ Salen de dos sitios, y ninguno sobra:
   todas igual, y como la cola es larguísima, eso es la rareza. Lo construye `progressions.mjs`
   desde el índice publicado, sin reconectar nada.
 - **La guitarra.** De las veinticuatro sorteadas se enseñan las seis que más dan de sí: las de
-  más cuerdas al aire por acorde en el mejor arreglo con el preset resonante de Rearmonizar.
+  más cuerdas al aire por acorde en el mejor arreglo con el preset resonante del motor de rearmonización.
   Medido antes de hacerlo: la frecuencia y la resonancia van poco de la mano (correlación de
   rango 0,1–0,45 según el tono), y por eso hace falta la criba.
 

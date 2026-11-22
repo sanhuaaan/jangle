@@ -1,8 +1,8 @@
 import { parseProgression, suggest, detectKey, transposeSymbol, intervalTo, rootOf, KINDS } from "./rules.js";
 import { KEYS, noteName } from "./notes.js";
-import { capoSuggestions, capoArrangements, shapeSymbol } from "./capo.js";
+import { capoSuggestions, capoArrangements, shapeSymbol, RESONANT } from "./capo.js";
 import { identify, degreeShort } from "./identify.js";
-import { reharmonizations } from "./reharm.js";
+import { PRESETS } from "./reharm.js";
 import { propose, MINORS, readChord } from "./progressions.js";
 import { searchSongs, fetchSong, suggestions } from "./song.js";
 import {
@@ -24,7 +24,6 @@ const summary = document.querySelector("#summary");
 const subsList = document.querySelector("#subs");
 const capoList = document.querySelector("#capo");
 const retuneList = document.querySelector("#retune");
-const reharmList = document.querySelector("#reharm");
 const error = document.querySelector("#error");
 
 // De qué canción y parte salió la progresión actual (null si se tecleó a mano).
@@ -170,8 +169,6 @@ form.addEventListener("submit", async e => {
 
   renderCapo(progression);
 
-  renderReharm(progression);
-
   // Con dieciséis afinaciones el producto entero ronda el segundo de cálculo:
   // que las demás pestañas pinten primero. Si llega otro submit antes de que
   // toque, este se descarta y pinta solo el último.
@@ -229,8 +226,9 @@ keySelect.addEventListener("change", () => transposeTo(keySelect.value));
 
 // ── Pestaña "Cejilla": cómo se toca detrás de cada cejilla, y qué color da ───
 
-// Dos alturas por cejilla. Arriba la respuesta: el arreglo que más resuena
-// detrás de ella, con su digitación y lo que se gana. Debajo el menú: todos los
+// Dos alturas por cejilla. Arriba la respuesta: el arreglo que mejor cumple la
+// intención elegida (que resuene, una línea arriba, moverse lo justo…) detrás
+// de ella, con su digitación y lo que se gana. Debajo el menú: todos los
 // colores que esa cejilla pone a tu alcance, los haya elegido el arreglo o no.
 // Una sola ordenación, la del arreglo, que es la que sabe si algo es tocable.
 // La tarjeta de una cejilla: su arreglo (si la BD dio digitaciones) y el
@@ -242,7 +240,24 @@ function capoCard(a) {
     li.append(" ", el("small", {
       textContent: `${plural(a.open, "cuerda al aire", "cuerdas al aire")} · ${plural(a.still, "nota que no se mueve", "notas que no se mueven")}`,
     }));
-    li.append(chartOf(a), continuityDetails(a.steps, a.steps.map(s => s.sounding), TUNINGS[0].midis, a.capo));
+    // Usar el arreglo se lleva sus acordes, no la cejilla ni las digitaciones:
+    // el campo solo sabe de acordes.
+    const symbols = a.steps.map(s => s.sounding);
+    if (a.steps.some(s => s.changed)) {
+      li.append(" ", useButton("usar estos acordes", `Poner ${symbols.join(" ")} en la progresión`, () => useProgression(symbols)));
+    }
+    li.append(chartOf(a), continuityDetails(a.steps, symbols, TUNINGS[0].midis, a.capo));
+    // Con una intención de línea, la línea es la respuesta: se dice debajo, con
+    // los mismos números que tenía Rearmonizar.
+    if (LINES.has(a.preset.id)) {
+      li.append(
+        el("p", { className: "line", textContent: `Voz de arriba: ${a.line.join(" → ")}` }),
+        el("p", {
+          className: "why",
+          textContent: `${a.conjunct} de ${a.moves} movimientos por grado conjunto, ${plural(a.held, "nota repetida", "notas repetidas")} y ${plural(a.leaps, "salto", "saltos")}.`,
+        }),
+      );
+    }
   }
 
   const cp = capoColors.get(a.capo);
@@ -280,11 +295,45 @@ let capoExtra = []; // cejillas que el ranking dejó fuera, en su orden
 const remainingCapoLabel = () =>
   `ver otra cejilla · ${capoExtra.length === 1 ? "queda una" : `quedan ${capoExtra.length}`}`;
 
+// Qué busca el arreglo de cada cejilla: los presets de siempre, con la
+// resonancia por defecto, que es para lo que se pone una cejilla. Lo que eliges
+// se recuerda en este navegador; si no se puede, se empieza por la resonancia.
+const LINES = new Set(["descending", "ascending", "pedal"]);
+const INTENT_KEY = "jangle.capoIntent";
+let capoPreset = (() => {
+  try { return PRESETS.find(p => p.id === localStorage.getItem(INTENT_KEY)) ?? RESONANT; }
+  catch { return RESONANT; }
+})();
+let capoProgression = [];
+
+function intentRow() {
+  const li = el("li", { className: "intent" });
+  const choices = el("div", { className: "choices", role: "group" });
+  choices.setAttribute("aria-label", "Qué buscar en el arreglo");
+  // La resonancia primero: es lo que se viene a buscar a esta pestaña.
+  for (const preset of [RESONANT, ...PRESETS.filter(p => p !== RESONANT)]) {
+    const b = el("button", { type: "button", textContent: preset.name, title: preset.why });
+    b.setAttribute("aria-pressed", String(preset === capoPreset));
+    b.addEventListener("click", () => {
+      if (preset === capoPreset) return;
+      capoPreset = preset;
+      try { localStorage.setItem(INTENT_KEY, preset.id); } catch {}
+      capoList.replaceChildren();
+      renderCapo(capoProgression);
+    });
+    choices.append(b);
+  }
+  li.append(choices, el("p", { className: "why hint", textContent: capoPreset.why }));
+  return li;
+}
+
 function renderCapo(progression) {
+  capoProgression = progression;
   capoProg = progression.map(c => c.symbol);
-  capoColors =new Map(capoSuggestions(progression).map(cp => [cp.capo, cp]));
+  capoColors = new Map(capoSuggestions(progression).map(cp => [cp.capo, cp]));
   // Sin la base de datos no hay digitaciones que elegir, así que queda el menú.
-  const arrangements = db ? capoArrangements(db, progression) : [];
+  const arrangements = db ? capoArrangements(db, progression, 7, capoPreset) : [];
+  if (arrangements.length) capoList.append(intentRow());
   const all = arrangements.length ? arrangements : [...capoColors.values()].map(cp => ({ capo: cp.capo }));
 
   for (const a of all.slice(0, 3)) capoList.append(capoCard(a));
@@ -335,9 +384,11 @@ function chartOf(a) {
     name.dataset.root = rootOf(s.sounding);
     const svg = document.createElement("span");
     svg.innerHTML = shapeSvg(s.position);
+    // Debajo de cada diagrama, lo que busca la intención: la nota de arriba
+    // cuando se persigue una línea, las cuerdas al aire en lo demás.
     step.append(name, svg, el("span", {
       className: "top",
-      textContent: s.open ? `${s.open} al aire` : "sin cuerdas al aire",
+      textContent: LINES.has(a.preset.id) ? s.topNote : s.open ? `${s.open} al aire` : "sin cuerdas al aire",
     }));
     chart.append(step);
   }
@@ -401,81 +452,6 @@ function renderSubs(progression) {
     li.append(box);
     subsList.append(li);
   });
-}
-
-// ── Pestaña "Rearmonizar": la progresión entera, no acorde a acorde ─────────
-
-// Cada versión aplica unas cuantas sustituciones que encajan entre sí y elige
-// las digitaciones de modo que la nota más aguda dibuje una línea. Se enseña esa
-// línea debajo de los diagramas, que es lo que justifica cada elección.
-function renderReharm(progression) {
-  reharmList.replaceChildren();
-  if (!db) {
-    reharmList.append(el("li", {
-      className: "why",
-      textContent: "Sin las posiciones de guitarra no se puede elegir digitación, así que esta pestaña necesita conexión.",
-    }));
-    return;
-  }
-
-  const versions = reharmonizations(db, progression);
-  if (!versions.length) {
-    reharmList.append(el("li", {
-      className: "why",
-      textContent: "Alguno de estos acordes no tiene posiciones en la base de datos, así que no se puede armar el arreglo.",
-    }));
-    return;
-  }
-
-  for (const v of versions) {
-    const li = document.createElement("li");
-    const head = el("h3", { textContent: v.intention.name });
-    const symbols = v.steps.map(s => s.symbol);
-    if (v.steps.some(s => s.changed)) {
-      head.append(" ", useButton("usar esta versión", `Poner ${symbols.join(" ")} en la progresión`, () => useProgression(symbols)));
-    }
-    li.append(head, el("p", { className: "why", textContent: v.intention.why }));
-
-    const chart = document.createElement("div");
-    chart.className = "chart";
-    for (const s of v.steps) {
-      const step = document.createElement("div");
-      step.className = s.changed ? "step changed" : "step";
-      // Sin tooltip de posiciones alternativas: aquí la digitación que importa
-      // es la que hace la línea, y está dibujada justo debajo. Al pulsar se abre
-      // esa misma en el analizador, no la primera que tenga la BD.
-      const name = el("span", { className: "chord", textContent: s.symbol });
-      name.dataset.frets = s.frets.join(",");
-      const svg = document.createElement("span");
-      svg.innerHTML = shapeSvg(s.position);
-      step.append(name, svg, el("span", { className: "top", textContent: s.topNote }));
-      chart.append(step);
-    }
-    li.append(chart, continuityDetails(v.steps, v.steps.map(s => s.symbol)));
-
-    li.append(el("p", {
-      className: "line",
-      textContent: `Voz de arriba: ${v.line.join(" → ")}`,
-    }));
-    const conjunct = `${v.conjunct} de ${v.moves} movimientos por grado conjunto`;
-    li.append(el("p", {
-      className: "why",
-      textContent: `${conjunct}, ${plural(v.held, "nota repetida", "notas repetidas")} y ${plural(v.leaps, "salto", "saltos")}.`,
-    }));
-    // Los mismos números en todas las tarjetas, gane quien gane: comparar la
-    // resonante con la melódica es justo para lo que están.
-    li.append(el("p", {
-      className: "why",
-      textContent: `${plural(v.open, "cuerda al aire", "cuerdas al aire")}, ${plural(v.common, "nota común", "notas comunes")} y ${plural(v.movement, "semitono", "semitonos")} de movimiento entre voces.`,
-    }));
-    for (const s of v.steps.filter(x => x.rule && x.changed)) {
-      li.append(el("p", {
-        className: "why",
-        textContent: `${s.from} → ${s.symbol} (${s.rule}). ${s.why}`,
-      }));
-    }
-    reharmList.append(li);
-  }
 }
 
 // ── Pestaña "Afinaciones": la misma progresión en cada afinación ─────────────

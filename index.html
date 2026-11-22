@@ -55,13 +55,13 @@
        el resto abre a saco, como antes. */
     :root { interpolate-size: allow-keywords; }
     #subs details::details-content, #capo details::details-content, #retune details::details-content,
-    #reharm details::details-content, #summary details::details-content {
+    #summary details::details-content {
       block-size: 0;
       overflow-y: clip;
       transition: block-size 0.25s ease, content-visibility 0.25s allow-discrete;
     }
     #subs details[open]::details-content, #capo details[open]::details-content,
-    #retune details[open]::details-content, #reharm details[open]::details-content,
+    #retune details[open]::details-content,
     #summary details[open]::details-content, #song-box[open]::details-content,
     #library-box[open]::details-content { block-size: auto; }
     h1 { font-size: 1.4rem; }
@@ -74,17 +74,15 @@
     }
     #tab-subs:checked ~ .tabs label[for="tab-subs"],
     #tab-capo:checked ~ .tabs label[for="tab-capo"],
-    #tab-reharm:checked ~ .tabs label[for="tab-reharm"],
     #tab-retune:checked ~ .tabs label[for="tab-retune"] { background: var(--panel); color: var(--text); }
-    #subs, #capo, #reharm, #retune { display: none; list-style: none; padding: 0; }
-    #tab-subs:checked ~ #subs, #tab-capo:checked ~ #capo,
-    #tab-reharm:checked ~ #reharm, #tab-retune:checked ~ #retune { display: block; animation: fade-in 0.2s ease; }
+    #subs, #capo, #retune { display: none; list-style: none; padding: 0; }
+    #tab-subs:checked ~ #subs, #tab-capo:checked ~ #capo, #tab-retune:checked ~ #retune { display: block; animation: fade-in 0.2s ease; }
     /* Estados vacíos: qué hace cada pestaña mientras no hay progresión. */
-    #subs:empty::before, #capo:empty::before, #reharm:empty::before, #retune:empty::before {
+    #subs:empty::before, #capo:empty::before, #retune:empty::before {
       display: block; padding: 1rem 0; font-size: 0.85rem; color: var(--muted);
     }
     #subs:empty::before { content: "Escribe una progresión arriba (o búscala por canción) y aquí saldrán sustituciones acorde a acorde."; }
-    #capo:empty::before { content: "Con una progresión arriba, aquí saldrán posiciones de cejilla cuyas cuerdas al aire añaden color."; }
+    #capo:empty::before { content: "Con una progresión arriba, aquí saldrá cómo tocarla detrás de cada cejilla: buscando que resuene, una línea arriba o que se mueva lo justo."; }
     #retune:empty::before { content: "Con una progresión arriba, aquí saldrá cómo suena en cada afinación, ordenadas por lo que resuenan."; }
     #retune .capos summary {
       cursor: pointer; font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; width: fit-content;
@@ -95,7 +93,6 @@
       border-left: var(--line) solid var(--separator);
     }
     #retune .capo-list > li { padding: 0.4rem 0 0.2rem; animation: fade-in 0.2s ease; }
-    #reharm:empty::before { content: "Con una progresión arriba, aquí saldrán versiones enteras del acompañamiento guiadas por la voz aguda."; }
     /* El mástil es una herramienta aparte: se abre con el botón de la cabecera. */
     /* El mástil vive al final de la página y siempre está: así no empuja nada al
        abrirse, porque no se abre. El botón de la cabecera solo baja hasta él. */
@@ -317,8 +314,16 @@
     #readout h3 { margin: 0.75rem 0 0; }
     #readout .hint { margin: 0.2rem 0 0; }
     .actions { display: flex; align-items: center; gap: 0.75rem; }
-    #reharm > li { padding: 0.75rem 0 1rem; border-bottom: var(--line) solid var(--separator); }
-    #reharm h3 { font-size: 1rem; margin: 0; }
+    /* Qué busca el arreglo de cada cejilla: una fila de botones, el elegido marcado. */
+    #capo > li.intent { padding: 0.2rem 0 0.7rem; }
+    .intent .choices { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .intent .choices button {
+      font-size: 0.8rem; padding: 0.2rem 0.65rem; border-radius: var(--radius);
+      background: var(--panel); color: var(--muted); border: var(--line) solid var(--border);
+    }
+    .intent .choices button:hover { background: var(--panel-high); color: var(--text); border-color: var(--accent); }
+    .intent .choices button[aria-pressed="true"] { background: var(--accent); color: white; border-color: var(--accent); }
+    .intent .why { margin: 0.45rem 0 0; }
     /* La fila de una rearmonización larga no cabe en la columna: se desplaza por
        dentro en vez de ensancharla, y no arrastra el gesto a la página, que en un
        trackpad significa "atrás". La barra va fina y del color del borde donde el
@@ -454,6 +459,7 @@
       #capo > li { border: var(--line) solid var(--border); border-radius: var(--radius); padding: 0.75rem 1rem; margin-bottom: 1rem; border-bottom: var(--line) solid var(--border); }
       /* La fila de "otras cejillas" no es una tarjeta: sin borde de tarjeta. */
       #capo > li.other-capos { border: none; padding: 0.2rem 0.2rem; }
+      #capo > li.intent { border: none; padding: 0.2rem 0 0.4rem; }
       #capo > li > strong { display: block; margin-bottom: 0.35rem; }
       #capo .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 0 2rem; align-items: start; }
       /* Cancionero y resultados de búsqueda, en rejilla. */
@@ -561,17 +567,14 @@
   <main>
   <input type="radio" name="tab" id="tab-subs" checked hidden>
   <input type="radio" name="tab" id="tab-capo" hidden>
-  <input type="radio" name="tab" id="tab-reharm" hidden>
   <input type="radio" name="tab" id="tab-retune" hidden>
   <nav class="tabs">
     <label for="tab-subs">Sustituciones</label>
     <label for="tab-capo">Cejilla</label>
-    <label for="tab-reharm">Rearmonizar</label>
     <label for="tab-retune">Afinaciones</label>
   </nav>
   <ul id="subs"></ul>
   <ul id="capo"></ul>
-  <ul id="reharm"></ul>
   <ul id="retune"></ul>
   </main>
   <script type="module" src="./app.js"></script>

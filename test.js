@@ -4,7 +4,7 @@ import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { Chord, Note } from "tonal";
 import { parseProgression, suggest, detectKey, transposeSymbol, intervalTo, rootOf, RULES, KINDS } from "./rules.js";
-import { reharmonizations, pairVoices } from "./reharm.js";
+import { reharmonizations, pairVoices, PRESETS } from "./reharm.js";
 import { capoSuggestions, capoArrangements, shapeSymbol } from "./capo.js";
 import { parseSearch, parseTab, suggestionSlug, decodeEntities } from "./song.js";
 import { findShape, shapeSvg, fretboardSvg, openString, absoluteFrets, playablePositions, STRINGS, TUNINGS, MAX_FRET } from "./guitar.js";
@@ -984,6 +984,44 @@ test("el arreglo de cejilla prefiere las digitaciones que dejan cuerdas al aire"
     .reduce((n, c) => n + playablePositions(guitarDb, c.symbol)[0].frets.filter(f => f === 0).length, 0);
   assert.ok(best.open > asWritten, `el arreglo (${best.open}) no mejora lo obvio (${asWritten})`);
   assert.ok(best.still > 0, "algo tendrá que quedarse quieto entre acordes");
+});
+
+test("la cejilla busca también la intención de Rearmonizar: una línea que baja", () => {
+  const prog = parseProgression("C Am F G");
+  const descending = PRESETS.find(p => p.id === "descending");
+  const arrangements = capoArrangements(guitarDb, prog, 7, descending);
+  assert.ok(arrangements.length >= 5);
+  // Ordenadas por coste: mismo preset y misma progresión, así que comparable.
+  const costs = arrangements.map(a => a.cost);
+  assert.deepEqual(costs, [...costs].sort((x, y) => x - y));
+  const best = arrangements[0];
+  assert.equal(best.preset, descending);
+  // La voz de arriba baja por grados conjuntos, y se cuenta en lo que suena, no en la forma.
+  assert.deepEqual(best.line, ["C", "B", "A", "G"]);
+  assert.equal(best.conjunct, 3);
+  assert.equal(best.leaps, 0);
+  best.steps.forEach((s, i) => {
+    assert.equal(s.topNote, best.line[i]);
+    assert.equal(Chord.get(s.sounding).tonic, prog[i].tonic, "solo adornos, también con otra intención");
+  });
+});
+
+test("cada intención saca su línea en casi todas las progresiones comunes", () => {
+  // Lo que se midió al llevar Rearmonizar a la cejilla (2026-11-22), como suelo:
+  // si el motor empeora, esto lo dice.
+  const progs = ["C Am F G", "G D Em C", "Am F C G", "D A Bm G", "E B C#m A", "F G Am F G C F G",
+    "C G Am Em F C F G", "Dm7 G7 Cmaj7", "Em C G D", "A E F#m D", "G Em C D", "C F G C", "Bb F Gm Eb", "E A B E"];
+  const want = { descending: d => d < 0 && d >= -2, ascending: d => d > 0 && d <= 2, pedal: d => d === 0 };
+  for (const [id, ok] of Object.entries(want)) {
+    const preset = PRESETS.find(p => p.id === id);
+    let perfect = 0;
+    for (const text of progs) {
+      const best = capoArrangements(guitarDb, parseProgression(text), 7, preset)[0];
+      const tops = best.steps.map(s => s.top);
+      if (tops.slice(1).every((t, i) => ok(t - tops[i]))) perfect++;
+    }
+    assert.ok(perfect >= 13, `${id}: línea perfecta en ${perfect} de ${progs.length}`);
+  }
 });
 
 test("el mástil dibuja la cejilla y lo que solo pisa ella suena al aire", () => {

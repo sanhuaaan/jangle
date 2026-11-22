@@ -69,23 +69,29 @@ export function capoSuggestions(progression, maxFret = 7) {
 // ── Arreglo con cuerdas al aire ─────────────────────────────────────────────
 //
 // Lo de arriba dice qué colores pone a tu alcance cada cejilla; esto dice cómo
-// se toca la progresión para aprovecharlos. Se busca la cadena de digitaciones
-// que haga sonar el máximo de cuerdas al aire y deje quietas el máximo de notas
-// al cambiar de acorde, que en guitarra son la misma cosa: una cuerda al aire
-// común a dos acordes seguidos no es que se comparta, es que sigue sonando sola
-// mientras la mano se va a otro sitio.
-
-// El coste es el mismo que usa la rearmonización, con su preset resonante; aquí
-// solo se añade la cejilla como dimensión de búsqueda y el filtro de solo-adornos.
-const RESONANT = PRESETS.find(p => p.id === "resonance");
+// se toca la progresión para aprovecharlos: la cadena de digitaciones, solo con
+// adornos (el color cambia, la función no), que mejor cumpla una intención.
+// Por defecto la resonante —el máximo de cuerdas al aire y de notas quietas, que
+// en guitarra son la misma cosa: una cuerda al aire común a dos acordes seguidos
+// sigue sonando sola mientras la mano se va a otro sitio—, pero vale cualquiera
+// de los presets: la línea de arriba que baja o sube, el pedal, el movimiento
+// mínimo, la continuidad. Es la antigua pestaña Rearmonizar con la cejilla como
+// dimensión y sin sustituciones de verdad, que son cosa de Sustituciones.
+//
+// Medido (2026-11-22) sobre 14 progresiones comunes contra aquella pestaña: la
+// línea descendente sale perfecta en 13 frente a 9 y la ascendente en 14 frente
+// a 12; lo que se dejaba eran 5 cambios en 42 versiones de línea y, en
+// continuidad y resonancia, casi siempre la línea cromática interna, que está en
+// Sustituciones a un clic.
+export const RESONANT = PRESETS.find(p => p.id === "resonance");
 
 // ponytail: peaje fijo por adornar, fuera del vocabulario de pesos; es el mando
 // de cuántos adornos salen, no parte del coste de encadenar.
-const nodeCost = n => -RESONANT.w.open * n.open + (n.rule ? 1 : 0);
+const nodeCostFor = preset => n => -(preset.w.open ?? 0) * n.open + (n.rule ? 1 : 0);
 
 // Para cada cejilla, el mejor arreglo que se puede tocar detrás de ella. Null si
 // la BD no da digitaciones para alguno de los acordes.
-function arrangement(db, progression, capo) {
+function arrangement(db, progression, capo, preset) {
   const layers = optionsFor(progression).map(options => options
     .filter(isAdornment)
     .flatMap(o => playablePositions(db, shapeSymbol(o.chords[0], capo))
@@ -95,32 +101,48 @@ function arrangement(db, progression, capo) {
       .map(v => ({ ...v, open: openStrings(v.frets), sounding: o.chords[0], rule: o.rule }))));
   if (layers.some(l => !l.length)) return null;
 
-  const chain = bestChain(layers, RESONANT, nodeCost);
+  const chain = bestChain(layers, preset, nodeCostFor(preset));
   const still = chain.slice(1).reduce((n, p, i) =>
     n + p.frets.filter((f, s) => f >= 0 && f === chain[i].frets[s]).length, 0);
+  // La voz de arriba en lo que suena: la forma se toca desde la cejilla.
+  const tops = chain.map(n => n.top + capo);
+  const moves = tops.slice(1).map((t, i) => t - tops[i]);
   return {
     capo,
+    preset,
+    cost: chain.at(-1).total,
     steps: chain.map((n, i) => ({
       sounding: n.sounding,
       shape: n.symbol,
       position: n.position,
       frets: n.frets,
       open: n.open,
+      top: tops[i],
+      topNote: noteName(tops[i]),
+      rule: n.rule,
       changed: n.sounding !== progression[i].symbol,
     })),
     open: chain.reduce((n, x) => n + x.open, 0),
     still,
+    line: tops.map(noteName),
+    moves: moves.length,
+    conjunct: moves.filter(d => d && Math.abs(d) <= 2).length,
+    held: moves.filter(d => d === 0).length,
+    leaps: moves.filter(d => Math.abs(d) > 4).length,
   };
 }
 
-// Las cejillas ordenadas por lo que resuena el arreglo que permiten: cuerdas al
-// aire primero, luego notas que se quedan quietas, y a igualdad el traste más
-// bajo, que es el que menos aprieta la mano.
-export function capoArrangements(db, progression, maxFret = 7) {
+// Las cejillas ordenadas por lo bien que cumplen la intención. La resonante, por
+// lo que resuena: cuerdas al aire primero, luego notas quietas, y a igualdad el
+// traste más bajo, que es el que menos aprieta la mano. Las demás, por su coste:
+// mismo preset y misma progresión en todas las cejillas, así que es comparable.
+export function capoArrangements(db, progression, maxFret = 7, preset = RESONANT) {
   const out = [];
   for (let capo = 0; capo <= maxFret; capo++) {
-    const a = arrangement(db, progression, capo);
+    const a = arrangement(db, progression, capo, preset);
     if (a) out.push(a);
   }
-  return out.sort((x, y) => y.open - x.open || y.still - x.still || x.capo - y.capo);
+  return preset === RESONANT
+    ? out.sort((x, y) => y.open - x.open || y.still - x.still || x.capo - y.capo)
+    : out.sort((x, y) => x.cost - y.cost || x.capo - y.capo);
 }
