@@ -235,8 +235,12 @@ hacerlo y en el mapa de voces queda repartida entre filas. Y **usar estos acorde
 Cejilla: te llevas a la progresión los adornos que esa afinación hace sonar (`C Am F G` en CGCGCD
 es `Csus2 Am7 Fadd9 Gsus2`) y sigues desde Sustituciones o Cejilla, aunque no reafines.
 
-Y cada tarjeta dice **a qué cejilla equivalen sus colores**: *«Sus colores son los de la estándar
-con cejilla en 3: los tienes en Cejilla sin reafinar»*. No es una forma de hablar. Los colores (qué
+Y cada tarjeta dice **a qué cejilla equivalen sus colores**, con las notas a la vista: *«Las notas
+que deja al aire (C, G, E) también están al aire en la estándar con cejilla en 5 (A D G C E A): los
+adornos que salen de ellas los tienes en Cejilla. Lo que cambia al reafinar es en qué cuerda y en qué
+octava suenan, y cuántas a la vez»*. Lo que se compara es solo eso, qué notas pueden quedar al aire:
+los intervalos entre cuerdas, el registro (Open C tiene un C grave que con cejilla no existe) y
+cuántas suenan juntas no son los mismos, y por eso la frase lo dice. Los colores (qué
 adorno pone cada cuerda al aire sobre cada acorde) dependen solo de qué notas suenan al aire, y las
 de cada afinación con nombre caben en las de la estándar con una sola cejilla: CGCGCD (C G D) en la
 3, Open C en la 5, Open G y DADGAD sin ella. Drop C, D estándar, Open Dm, Open E y C estándar

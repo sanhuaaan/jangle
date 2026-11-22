@@ -517,15 +517,22 @@ function retuneCard(a) {
   // Los colores de una afinación no son nuevos: son los de la estándar con
   // alguna cejilla (colorCapo). Decirlo es el enlace con Cejilla, y deja claro
   // que reafinar compra dónde suenan, no qué suena.
-  const same = a.tuning.id === "standard" ? null : colorCapo(a.tuning.midis.map(m => m + a.capo));
+  // Se enseñan las notas de las dos, porque lo que se compara es solo eso: qué
+  // notas pueden quedar al aire. Los intervalos entre cuerdas, el registro y
+  // cuántas suenan a la vez no son los mismos, y la frase tiene que decirlo.
+  const sounding = a.tuning.midis.map(m => m + a.capo);
+  const same = a.tuning.id === "standard" ? null : colorCapo(sounding);
   if (same !== null) {
+    const open = [...new Set(sounding.map(noteName))].join(", ");
+    const standard = TUNINGS[0].midis.map(m => noteName(m + same)).join(" ");
+    const where = same === 0 ? `sin cejilla (${standard})` : `con cejilla en ${same} (${standard})`;
+    const reach = same <= 7
+      ? "los adornos que salen de ellas los tienes en Cejilla"
+      : "los adornos que salen de ellas serían los de esa cejilla, más arriba de lo que prueba Cejilla (hasta el 7)";
     li.append(el("p", {
       className: "why hint",
-      textContent: same === 0
-        ? "Sus colores son los de la estándar sin cejilla: los tienes en Cejilla sin reafinar. Lo que cambia es dónde suenan."
-        : same <= 7
-          ? `Sus colores son los de la estándar con cejilla en ${same}: los tienes en Cejilla sin reafinar. Lo que cambia es dónde suenan.`
-          : `Sus colores son los de la estándar con cejilla en ${same}, más arriba de lo que prueba Cejilla (hasta el 7).`,
+      textContent: `Las notas que deja al aire (${open}) también están al aire en la estándar ${where}: ${reach}. `
+        + "Lo que cambia al reafinar es en qué cuerda y en qué octava suenan, y cuántas a la vez.",
     }));
   }
   li.append(continuityDetails(a.steps, symbols, a.tuning.midis, a.capo));
