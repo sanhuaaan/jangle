@@ -229,7 +229,7 @@ En estándar encuentra solas las formas de toda la vida, que es el test que lo m
 
 Cada tarjeta dice lo que importa para decidir si reafinar. **Cuánto se gana frente a la
 estándar** sin cejilla (*«17 cuerdas al aire · +4 frente a la estándar»*), que es lo que paga el
-trabajo de reafinar y volver. **Los bordones**: qué cuerdas suenan al aire en todos los acordes
+trabajo de reafinar y volver. **Los drones** (cuerdas que no paran de sonar de fondo): qué cuerdas suenan al aire en todos los acordes
 (*«la 5ª (G) y la 3ª (G) suenan al aire toda la progresión»*), que es la razón musical para
 hacerlo y en el mapa de voces queda repartida entre filas. Y **usar estos acordes**, como en
 Cejilla: te llevas a la progresión los adornos que esa afinación hace sonar (`C Am F G` en CGCGCD
@@ -248,7 +248,7 @@ necesitan la 8, la 9 o la 10, más allá de lo que prueba Cejilla. Medido sobre 
 ninguno de los 1.201 colores de las afinaciones faltaba en Cejilla, y daban menos (5,7 por
 progresión frente a 10,5 con la mejor cejilla): las afinaciones abiertas repiten notas. Por eso
 Afinaciones no tiene su propio «si buscas color»: reafinar compra **dónde** suenan las notas —el
-bordón en el bajo, el registro, más cuerdas al aire a la vez—, no **qué** colores hay.
+drone en el bajo, el registro, más cuerdas al aire a la vez—, no **qué** colores hay.
 
 Cada tarjeta lleva también un desplegable **«probar con cejilla»** que añade la cejilla como dimensión del
 setup: prueba esa afinación con cejilla del 1 al 5 y enseña las tres que más resuenan. Para

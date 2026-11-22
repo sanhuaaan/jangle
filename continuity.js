@@ -20,7 +20,7 @@ export function voicesOf(frets, tuning, capo = 0) {
     .sort((a, b) => a.midi - b.midi);
 }
 
-// Los bordones de un arreglo: las cuerdas que suenan al aire en todos sus
+// Los drones de un arreglo: las cuerdas que suenan al aire en todos sus
 // acordes. Es la razón musical para reafinar —una nota que no para de sonar
 // debajo o encima de todo—, y en el mapa de voces queda repartida entre filas.
 // De 6ª a 1ª, con la nota que suena (afinación más cejilla).

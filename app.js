@@ -503,7 +503,7 @@ function retuneCard(a) {
     chart.append(step);
   }
   li.append(chart);
-  // Los bordones: lo que la afinación deja sonando debajo de todo, dicho con
+  // Los drones: lo que la afinación deja sonando de fondo, dicho con
   // palabras, que en el mapa de voces queda repartido entre filas.
   const held = drones(a.steps, a.tuning.midis, a.capo);
   if (held.length) {
@@ -511,7 +511,7 @@ function retuneCard(a) {
     const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} y ${names.at(-1)}`;
     li.append(el("p", {
       className: "why",
-      textContent: `Bordón: ${list} ${held.length === 1 ? "suena" : "suenan"} al aire toda la progresión.`,
+      textContent: `Drone: ${list} ${held.length === 1 ? "suena" : "suenan"} al aire toda la progresión.`,
     }));
   }
   // Los colores de una afinación no son nuevos: son los de la estándar con
