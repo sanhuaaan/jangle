@@ -1307,7 +1307,17 @@ test("propose devuelve bucles distintos en el tono, cribados por resonancia", ()
 
 // ── continuity.js: el mapa de voces ───────────────────────────────────────
 
-import { voicesOf, voiceLines } from "./continuity.js";
+import { voicesOf, voiceLines, drones } from "./continuity.js";
+
+test("un bordón es una cuerda al aire en todos los acordes, y suena con su afinación y su cejilla", () => {
+  const std = TUNINGS[0].midis;
+  const steps = [[-1, 0, 2, 2, 1, 0], [0, 2, 2, 1, 0, 0]].map(frets => ({ frets })); // Am → E
+  // La 5ª está al aire en Am pero no en E; la 1ª, en los dos. Una cuerda muda no es un bordón.
+  assert.deepEqual(drones(steps, std), [{ string: "1ª", note: "E" }]);
+  assert.deepEqual(drones(steps, std, 2), [{ string: "1ª", note: "F#" }]);
+  const openG = TUNINGS.find(t => t.name === "Open G").midis;
+  assert.deepEqual(drones([{ frets: [0, 0, 0, 0, 0, 0] }], openG).map(d => d.note), ["D", "G", "D", "G", "B", "D"]);
+});
 
 test("pairVoices dice también qué voz va con cuál", () => {
   const p = pairVoices([48, 52, 55, 60, 64], [45, 52, 57, 60, 64]); // C abierto → Am abierto

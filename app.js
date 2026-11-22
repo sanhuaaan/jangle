@@ -10,7 +10,7 @@ import {
   saveSection, removeSection, removeSong, songKey,
 } from "./library.js";
 import { findShape, shapeSvg, fretboardSvg, openString, absoluteFrets, playablePositions, MAX_FRET, TUNINGS, STRINGS } from "./guitar.js";
-import { voiceLines } from "./continuity.js";
+import { voiceLines, drones } from "./continuity.js";
 import { tuningArrangements } from "./generate.js";
 
 // Crear un nodo con sus propiedades de una vez: es el gesto más repetido del
@@ -463,15 +463,27 @@ function renderSubs(progression) {
 // a lo que has escrito. Las cejillas no compiten de salida —serían decenas de
 // setups y segundos de cálculo—: cada afinación lleva un botón que las prueba.
 let retuneProg = null; // la progresión pintada, para expandir cejillas
+let standardOpen = null; // cuerdas al aire de la estándar sin cejilla: la referencia de cada tarjeta
 
 function retuneCard(a) {
   const li = document.createElement("li");
   li.append(el("strong", {
     textContent: `${a.tuning.notes} · ${a.tuning.name}${a.capo ? ` · cejilla en ${a.capo}` : ""}`,
   }));
+  // Reafinar cuesta —afinar, otras formas, volver luego—, así que lo que cuenta
+  // es cuánto se gana frente a la estándar sin cejilla, que es la referencia.
+  const isStandard = a.tuning.id === "standard" && !a.capo;
+  const gain = standardOpen === null || isStandard ? ""
+    : a.open === standardOpen ? " · igual que la estándar"
+    : ` · ${a.open > standardOpen ? `+${a.open - standardOpen}` : `−${standardOpen - a.open}`} frente a la estándar`;
   li.append(" ", el("small", {
-    textContent: `${plural(a.open, "cuerda al aire", "cuerdas al aire")} · ${plural(a.still, "nota que no se mueve", "notas que no se mueven")}`,
+    textContent: `${plural(a.open, "cuerda al aire", "cuerdas al aire")}${gain} · ${plural(a.still, "nota que no se mueve", "notas que no se mueven")}`,
   }));
+  // Usar el arreglo se lleva sus acordes, no la afinación: el campo solo sabe de acordes.
+  const symbols = a.steps.map(s => s.sounding);
+  if (a.steps.some(s => s.changed)) {
+    li.append(" ", useButton("usar estos acordes", `Poner ${symbols.join(" ")} en la progresión`, () => useProgression(symbols)));
+  }
   const chart = el("div", { className: "chart" });
   for (const s of a.steps) {
     const step = el("div", { className: s.changed ? "step changed" : "step" });
@@ -490,7 +502,19 @@ function retuneCard(a) {
     }));
     chart.append(step);
   }
-  li.append(chart, continuityDetails(a.steps, a.steps.map(s => s.sounding), a.tuning.midis, a.capo));
+  li.append(chart);
+  // Los bordones: lo que la afinación deja sonando debajo de todo, dicho con
+  // palabras, que en el mapa de voces queda repartido entre filas.
+  const held = drones(a.steps, a.tuning.midis, a.capo);
+  if (held.length) {
+    const names = held.map(d => `la ${d.string} (${d.note})`);
+    const list = names.length === 1 ? names[0] : `${names.slice(0, -1).join(", ")} y ${names.at(-1)}`;
+    li.append(el("p", {
+      className: "why",
+      textContent: `Bordón: ${list} ${held.length === 1 ? "suena" : "suenan"} al aire toda la progresión.`,
+    }));
+  }
+  li.append(continuityDetails(a.steps, symbols, a.tuning.midis, a.capo));
   if (!a.capo) {
     // Probar con cejilla: un desplegable que, la primera vez que se abre,
     // calcula esa afinación con cejilla del 1 al 5 y enseña dentro las tres
@@ -518,7 +542,9 @@ function retuneCard(a) {
 function renderRetune(progression) {
   retuneProg = progression;
   const candidates = [...TUNINGS, ...(custom.midis ? [{ ...custom, notes: custom.midis.map(noteName).join(" ") }] : [])];
-  for (const a of tuningArrangements(progression, candidates)) retuneList.append(retuneCard(a));
+  const arrangements = tuningArrangements(progression, candidates);
+  standardOpen = arrangements.find(a => a.tuning.id === "standard" && !a.capo)?.open ?? null;
+  for (const a of arrangements) retuneList.append(retuneCard(a));
 }
 
 // ── Mapa de voces: qué notas se quedan y cuáles se mueven ──────────────────

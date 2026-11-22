@@ -47,7 +47,7 @@ hacen, que es la decisión de verdad antes de mirar la regla concreta:
 - **Añadir** — acordes que lo preparan o lo alargan, repartiéndose su tiempo (`C → Dm7 G7 C`, `Fm C`, `Bb7 C`).
 
 Cada opción lleva un botón **usar** que la pone en la progresión, y lo mismo cada arreglo de
-**Cejilla** (**usar estos acordes**, salvo si no adorna nada). Es el gesto de
+**Cejilla** y de **Afinaciones** (**usar estos acordes**, salvo si no adorna nada). Es el gesto de
 transponer con otros acordes: reescribe el campo y todo se recalcula sobre la propuesta, así que se
 sigue trasteando desde ahí, y **atrás deshace**. En Sustituciones se queda abierto el acorde que
 estabas mirando. Los colores de **Cejilla** («y además, si buscas color») también lo llevan: como
@@ -213,9 +213,9 @@ presupuesto de cambios) sigue en pie: es la criba que ordena las progresiones de
 
 ## Afinaciones: qué preparación le sienta mejor
 
-La pestaña **Afinaciones** deja que las afinaciones compitan por tu progresión: las cinco con
-nombre (estándar, Drop D, DADGAD, Open G, Open D) más la personalizada si la has creado en el
-analizador. Para cada una busca el mejor arreglo con el mismo camino mínimo resonante de la
+La pestaña **Afinaciones** deja que las afinaciones compitan por tu progresión: las dieciséis con
+nombre (estándar, Drop D, DADGAD, Open G, Open D, Open C, CGCGCD…) más la personalizada si la has
+creado en el analizador. Para cada una busca el mejor arreglo con el mismo camino mínimo resonante de la
 cejilla y los mismos adornos, y como el preset y la progresión son los mismos en todas, **los
 costes por fin son comparables**: las tarjetas van ordenadas por coste total y la primera es la
 afinación que más le resuena a lo que has escrito. La estándar compite como una más — cuando gana,
@@ -227,7 +227,15 @@ tocables — al menos cuatro cuerdas, solo notas del acorde, la fundamental siem
 fundamental o quinta, mudas solo en los extremos, y cuatro dedos con la cejilla contando como uno.
 En estándar encuentra solas las formas de toda la vida, que es el test que lo mantiene honesto.
 
-Cada tarjeta lleva un desplegable **«probar con cejilla»** que añade la cejilla como dimensión del
+Cada tarjeta dice lo que importa para decidir si reafinar. **Cuánto se gana frente a la
+estándar** sin cejilla (*«17 cuerdas al aire · +4 frente a la estándar»*), que es lo que paga el
+trabajo de reafinar y volver. **Los bordones**: qué cuerdas suenan al aire en todos los acordes
+(*«la 5ª (G) y la 3ª (G) suenan al aire toda la progresión»*), que es la razón musical para
+hacerlo y en el mapa de voces queda repartida entre filas. Y **usar estos acordes**, como en
+Cejilla: te llevas a la progresión los adornos que esa afinación hace sonar (`C Am F G` en CGCGCD
+es `Csus2 Am7 Fadd9 Gsus2`) y sigues desde Sustituciones o Cejilla, aunque no reafines.
+
+Cada tarjeta lleva también un desplegable **«probar con cejilla»** que añade la cejilla como dimensión del
 setup: prueba esa afinación con cejilla del 1 al 5 y enseña las tres que más resuenan. Para
 `D G A D` gana Open D con `D · Gsus2 · A6 · Dmaj7` y 19 cuerdas al aire, frente a las 10 de la
 estándar pelada.

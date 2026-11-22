@@ -20,6 +20,15 @@ export function voicesOf(frets, tuning, capo = 0) {
     .sort((a, b) => a.midi - b.midi);
 }
 
+// Los bordones de un arreglo: las cuerdas que suenan al aire en todos sus
+// acordes. Es la razón musical para reafinar —una nota que no para de sonar
+// debajo o encima de todo—, y en el mapa de voces queda repartida entre filas.
+// De 6ª a 1ª, con la nota que suena (afinación más cejilla).
+export const drones = (steps, tuning, capo = 0) => tuning
+  .map((midi, string) => ({ string: `${6 - string}ª`, note: noteName(midi + capo), idx: string }))
+  .filter(d => steps.every(s => s.frets[d.idx] === 0))
+  .map(({ string, note }) => ({ string, note }));
+
 const line = n => ({ cells: new Array(n).fill(null) });
 const cell = (v, from) => {
   const delta = from ? v.midi - from.midi : null;
